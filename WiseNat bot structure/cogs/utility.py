@@ -6,6 +6,23 @@ class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.command(name="help", aliases=["h"])
+    async def help(self, ctx, *args):
+        await ctx.message.delete()
+
+        embed = discord.Embed(title="__**Help Commands**__", colour=0x00ff00)
+        help_message = await ctx.send(embed=embed)
+
+        await help_message.add_reaction("<:cross:671116183780720670>")
+
+        def check(reaction, user):
+            return str(reaction) == "<:cross:671116183780720670>" and str(reaction.message) == str(
+                help_message) and user != reaction.message.author
+
+        await self.bot.wait_for("reaction_add", check=check)
+        await help_message.delete()
+
+
     @commands.command(name="cog", aliases=["c"], hidden=True)
     @commands.is_owner()
     async def modify_cog(self, ctx, variant, *cog_list):
