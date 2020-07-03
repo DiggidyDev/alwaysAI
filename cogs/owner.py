@@ -12,6 +12,7 @@ class Owner(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.colour = discord.Color.blurple()
 
     async def cog_check(self, ctx):
         return await self.bot.is_owner(ctx.author)
@@ -34,7 +35,7 @@ class Owner(commands.Cog):
                                           "```python\n\u200b"
                                           f"{result_string}"
                                           f"```",
-                              colour=discord.Color.blurple())
+                              colour=self.colour)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["c"], hidden=True)
@@ -66,7 +67,7 @@ class Owner(commands.Cog):
             except Exception as e:
                 desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
 
-        embed = discord.Embed(title=variant, description=desc, colour=0x5288E5)
+        embed = discord.Embed(title=variant, description=desc, colour=self.colour)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["system", "stats", "ping"])
@@ -76,7 +77,7 @@ class Owner(commands.Cog):
             t2 = time.time()
             diff_ping = t2 - t1
 
-            embed = discord.Embed(colour=discord.Color.blurple())
+            embed = discord.Embed(colour=self.colour)
             CPU = ":gear: **CPU**" \
                   "```" \
                   "{0:^18}|{1:^18}|{2:^18}\n" \
