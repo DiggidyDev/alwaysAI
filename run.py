@@ -10,7 +10,7 @@ class Bot(commands.Bot):
         self.cog_list = []
 
     async def on_ready(self):
-        print("Name:\t{0}\nID:\t\t{1}".format(super().user.name, super().user.id))
+        print("Name:\t{0}\nID:\t{1}".format(super().user.name, super().user.id))
 
     async def on_command_error(self, ctx, exception):
         if isinstance(exception, commands.errors.CommandNotFound):
@@ -29,5 +29,7 @@ class Bot(commands.Bot):
 if __name__ == "__main__":
     bot = Bot()
     bot.remove_command("help")
-    bot.load_cog("cogs.utility")
+    bot.load_cog("cogs.owner")
+    bot.load_cog("cogs.commands")
+    bot.load_cog("cogs.events")
     bot.run()
