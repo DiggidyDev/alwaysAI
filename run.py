@@ -5,7 +5,7 @@ from discord.ext import commands
 class Bot(commands.Bot):
     def __init__(self):
         prefix = "*"
-        super().__init__(command_prefix=prefix, description="Quoting Time",
+        super().__init__(command_prefix=prefix, description="Computer Vision is amazing",
                          activity=discord.Activity(type=discord.ActivityType.listening, name=prefix + "help"))
         self.cog_list = []
 
