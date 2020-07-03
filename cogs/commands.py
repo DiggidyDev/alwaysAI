@@ -3,6 +3,8 @@ from subprocess import Popen, PIPE
 
 import discord
 from discord.ext import commands
+import numpy as np
+import cv2
 
 
 class Commands(commands.Cog):
@@ -108,6 +110,15 @@ class Commands(commands.Cog):
             embed.set_footer(text=f"{filtered_results} other result{'s' if filtered_results != 1 else ''} found")
 
         await ctx.send(embed=embed)
+
+    @commands.is_owner()
+    @commands.command()
+    async def model(self, ctx):
+        img_bytes = await ctx.message.attachments[0].read()  # TODO Run the model for multiple images
+        nparr = np.fromstring(img_bytes, np.uint8)
+        img_np = cv2.imdecode(nparr, 1)
+
+
 
 
 def setup(bot):
