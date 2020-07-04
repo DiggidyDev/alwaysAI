@@ -39,8 +39,8 @@ class Commands(commands.Cog):
 
                 sections.append(" ".join([s for s in sectors]))  # Replacing all of the whitespace with a single space
 
-                links = [w for w in sectors if "/" in w]  # Grab each object's link
-                attrs = [w for w in sectors if "/" not in w and "." in w]  # Grab each object
+                links = [i for i in sectors if "/" in i]  # Grab each object's link
+                objects = [i for i in sectors if "/" not in i and "." in i]  # Grab each object
 
                 # They're ordered like so with their respective links:
                 #
@@ -51,11 +51,10 @@ class Commands(commands.Cog):
                 # Hence zipping it will group them correctly:
                 #
                 #    [("OBJECT.ATTR", "#URL.EXT.FOR.OBJECT.ATTR"), (...)]
+                meta = zip(objects, links)
 
-                meta = zip(attrs, links)
-
-                for a, l in meta:
-                    self.bot.lookup[a] = f"https://alwaysai.co/docs/{l}"  # Assign the object's URL to the object
+                for o, l in meta:
+                    self.bot.lookup[o] = f"https://alwaysai.co/docs/{l}"  # Assign the object's URL to the object
 
             self.bot.docs = " ".join(sections)  # Concatenating each of the sections: attribute, function, method, module, class
 
@@ -85,7 +84,7 @@ class Commands(commands.Cog):
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-        links = [self.bot.lookup[x] for x in suggestions]  # Get each object's link from the lookup dictionary created earlier
+        links = [self.bot.lookup[s] for s in suggestions]  # Get each object's link from the lookup dictionary created earlier
 
         # Removes the preceding edgeiq. from each object
         results = "\n".join([f"[`{r.replace('edgeiq.', '')}`]({l})" for l, r in zip(links, suggestions)])
@@ -93,7 +92,7 @@ class Commands(commands.Cog):
         # General fancifying of the results
         results_count_true = len(links)
         results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
-        results_count = results_short.count("\n") + 1
+        results_count = results_short.count("\n") + 1 if len(results) <= 2048 and results_count_true != 0 else results_short.count("\n")
 
         embed = discord.Embed(title=f"{results_count} Result{'s' if results_count != 1 else ''}",
                               description=results_short)
