@@ -2,5 +2,6 @@
 The unofficial official alwaysAI discord bot repo!
 
 ## Dependencies
-* Discord.py
+* discord.py
 * psutil
+* sphinx
