@@ -16,7 +16,5 @@ class Commands(commands.Cog):
         img_np = cv2.imdecode(nparr, 1)
 
 
-
-
 def setup(bot):
     bot.add_cog(Commands(bot))
