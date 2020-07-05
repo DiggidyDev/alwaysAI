@@ -12,10 +12,12 @@ class Commands(commands.Cog):
         self.bot.docs = None
         self.bot.lookup = None
 
-    async def get_docs(self):
+    def get_docs(self):
 
-        if not self.bot.docs:  # If the find command has already been used, then this acts as a cache, almost - it'll only need to fetch the docs once per boot/reload
-            process = Popen(["python", "-m", "sphinx.ext.intersphinx", "https://alwaysai.co/docs/objects.inv"], stdout=PIPE)
+        if not self.bot.docs:  # If the find command has already been used, then this acts as a cache, almost - it'll
+            # only need to fetch the docs once per boot/reload
+            process = Popen(["python", "-m", "sphinx.ext.intersphinx", "https://alwaysai.co/docs/objects.inv"],
+                            stdout=PIPE)
             output = process.communicate()
 
             self.bot.docs = output  # Using a bot variable which will be used to create the lookup dict
@@ -23,7 +25,7 @@ class Commands(commands.Cog):
         return self.bot.docs
 
     async def fetch(self, query):
-        docs = await self.get_docs()
+        docs = self.get_docs()
 
         if not self.bot.lookup:  # Create the lookup dict if it doesn't exist
             self.bot.lookup = {}
@@ -56,17 +58,19 @@ class Commands(commands.Cog):
                 for o, l in meta:
                     self.bot.lookup[o] = f"https://alwaysai.co/docs/{l}"  # Assign the object's URL to the object
 
-            self.bot.docs = " ".join(sections)  # Concatenating each of the sections: attribute, function, method, module, class
-
+            self.bot.docs = " ".join(
+                sections)  # Concatenating each of the sections: attribute, function, method, module, class
 
         pattern = re.compile(rf"\w*(\.*{query}\.*)\w*", re.IGNORECASE)
-        indices = [(i.span()[0], i.span()[1]) for i in pattern.finditer(self.bot.docs)]  # Getting the indices of each search result in the sections' concatenation
+        indices = [(i.span()[0], i.span()[1]) for i in pattern.finditer(
+            self.bot.docs)]  # Getting the indices of each search result in the sections' concatenation
 
         # Probably one of the more disgusting lines :/
         # Finds the entire word that was found - characters up to the previous and next space.
         # Sorts it alphabetically (and case-sensitively)
-        suggestions = sorted({self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])] for pos in indices
-                          if "/" not in self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])]})
+        suggestions = sorted(
+            {self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])] for pos in indices
+             if "/" not in self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])]})
 
         return suggestions
 
@@ -84,7 +88,8 @@ class Commands(commands.Cog):
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-        links = [self.bot.lookup[s] for s in suggestions]  # Get each object's link from the lookup dictionary created earlier
+        links = [self.bot.lookup[s] for s in suggestions]  # Get each object's link from the lookup dictionary
+        # created earlier
 
         # Removes the preceding edgeiq. from each object
         results = "\n".join([f"[`{r.replace('edgeiq.', '')}`]({l})" for l, r in zip(links, suggestions)])
@@ -92,7 +97,8 @@ class Commands(commands.Cog):
         # General fancifying of the results
         results_count_true = len(links)
         results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
-        results_count = results_short.count("\n") + 1 if len(results) <= 2048 and results_count_true != 0 else results_short.count("\n")
+        results_count = results_short.count("\n") + 1 if len(
+            results) <= 2048 and results_count_true != 0 else results_short.count("\n")
 
         embed = discord.Embed(title=f"{results_count} Result{'s' if results_count != 1 else ''}",
                               description=results_short)
