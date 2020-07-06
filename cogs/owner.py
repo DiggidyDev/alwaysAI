@@ -34,7 +34,7 @@ class Owner(commands.Cog):
                                           "Output:"
                                           "```python\n\u200b"
                                           "{}"
-                                          "```".format(code,result_string),
+                                          "```".format(code, result_string),
                               colour=self.colour)
         await ctx.send(embed=embed)
 
