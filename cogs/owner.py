@@ -22,19 +22,19 @@ class Owner(commands.Cog):
         old_stdout = sys.stdout
         result = StringIO()
         sys.stdout = result
-        exec(f"async def __exc(self, ctx):\n    {code}")
+        exec("async def __exc(self, ctx):\n    {}".format(code))
         await locals()["__exc"](self, ctx)
         sys.stdout = old_stdout
         result_string = result.getvalue()
         embed = discord.Embed(title="Evaluation",
                               description="Input:"
                                           "```python\n"
-                                          f"{code}"
+                                          "{}"
                                           "```\n\n"
                                           "Output:"
                                           "```python\n\u200b"
-                                          f"{result_string}"
-                                          f"```",
+                                          "{}"
+                                          "```".format(code, result_string),
                               colour=self.colour)
         await ctx.send(embed=embed)
 
@@ -83,9 +83,9 @@ class Owner(commands.Cog):
                   "{0:^18}|{1:^18}|{2:^18}\n" \
                   "{3:^18}|{4:^18}|{5:^18}\n" \
                   "```".format("Usage:", "Cores:", "Clock Speed:",
-                               f"{psutil.cpu_percent()}%",
+                               "{} %".format(psutil.cpu_percent()),
                                psutil.cpu_count(),
-                               f"{psutil.cpu_freq().current / 1000} GHz"
+                               "{} GHz".format(psutil.cpu_freq().current / 1000)
                                )
 
             TOTAL = psutil.virtual_memory().total / 1024000000
@@ -98,9 +98,9 @@ class Owner(commands.Cog):
                   "{0:^18}|{1:^18}|{2:^18}\n" \
                   "{3:^18}|{4:^18}|{5:^18}" \
                   "```".format("Usage:", "Total:", "Available:",
-                               f"{round(PERCENT, 1)}%",
-                               f"{round(TOTAL, 2)} GB",
-                               f"{round(AVAILABLE, 2)} GB"
+                               "{}%".format(round(PERCENT, 1)),
+                               "{} GB".format(round(TOTAL, 2)),
+                               "{} GB".format(round(AVAILABLE, 2))
                                )
 
             PING = "\n\n:globe_with_meridians: **PING**" \
@@ -108,14 +108,14 @@ class Owner(commands.Cog):
                    "{0:^27}|{1:^27}\n" \
                    "{2:^27}|{3:^27}" \
                    "```".format("Websocket Ping:", "Heartbeat:",
-                                f"{round(diff_ping * 1000)} ms",
-                                f"{round(self.bot.latency * 1000)} ms"
+                                "{} ms".format(round(diff_ping * 1000)),
+                                "{} ms".format(round(self.bot.latency * 1000))
                                 )
 
             template = CPU + RAM + PING
             embed.description = template
-            embed.set_footer(text=f"Python {platform.python_version()}\n"
-                                  f"Discord.py {discord.__version__}")
+            embed.set_footer(text="Python {}\n"
+                                  "Discord.py {}".format(platform.python_version(), discord.__version__))
         await ctx.send(embed=embed)
 
 
