@@ -63,12 +63,12 @@ class Commands(commands.Cog):
                 meta = zip(objects, links)
 
                 for o, l in meta:
-                    self.bot.lookup[o] = f"https://alwaysai.co/docs/{l}"  # Assign the object's URL to the object
+                    self.bot.lookup[o] = "https://alwaysai.co/docs/{}".format(l)  # Assign the object's URL to the object
 
             self.bot.docs = " ".join(
                 sections)  # Concatenating each of the sections: attribute, function, method, module, class
 
-        pattern = re.compile(rf"\w*(\.*{query}\.*)\w*", re.IGNORECASE)
+        pattern = re.compile(r"\w*(\.*{}\.*)\w*".format(query), re.IGNORECASE)
         indices = [(i.span()[0], i.span()[1]) for i in pattern.finditer(
             self.bot.docs)]  # Getting the indices of each search result in the sections' concatenation
 
@@ -99,7 +99,7 @@ class Commands(commands.Cog):
         # created earlier
 
         # Removes the preceding edgeiq. from each object
-        results = "\n".join([f"[`{r.replace('edgeiq.', '')}`]({l})" for l, r in zip(links, suggestions)])
+        results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
 
         # General fancifying of the results
         results_count_true = len(links)
@@ -107,12 +107,12 @@ class Commands(commands.Cog):
         results_count = results_short.count("\n") + 1 if len(
             results) <= 2048 and results_count_true != 0 else results_short.count("\n")
 
-        embed = discord.Embed(title=f"{results_count} Result{'s' if results_count != 1 else ''}",
+        embed = discord.Embed(title="{} Result{}".format(results_count, "s" if results_count != 1 else ""),
                               description=results_short)
 
         filtered_results = results_count_true - results_count
         if filtered_results > 0:
-            embed.set_footer(text=f"{filtered_results} other result{'s' if filtered_results != 1 else ''} found")
+            embed.set_footer(text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
 
         await ctx.send(embed=embed)
 
