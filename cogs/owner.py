@@ -17,7 +17,7 @@ class Owner(commands.Cog):
     async def cog_check(self, ctx):
         return await self.bot.is_owner(ctx.author)
 
-    @commands.command(hidden=True)
+    @commands.command(aliases=["e"], hidden=True)
     async def eval(self, ctx, *, code):
         old_stdout = sys.stdout
         result = StringIO()
