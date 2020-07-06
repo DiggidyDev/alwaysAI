@@ -39,7 +39,7 @@ class Commands(commands.Cog):
 
         # TODO Run the model for multiple images
         # TODO Find a way to send bytes img to Discord
-        with Image.fromarray(image) as im:
+        with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
             output_buffer = BytesIO()
             im.save(output_buffer, "png")
             output_buffer.seek(0)
