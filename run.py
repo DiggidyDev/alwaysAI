@@ -1,9 +1,6 @@
 import discord
 from discord.ext import commands
 
-import cv2
-import edgeiq
-
 
 class Bot(commands.Bot):
     def __init__(self):

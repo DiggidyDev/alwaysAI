@@ -4,7 +4,9 @@ from subprocess import Popen, PIPE
 import discord
 from discord.ext import commands
 import numpy as np
+
 import cv2
+import edgeiq
 
 
 class Commands(commands.Cog):
