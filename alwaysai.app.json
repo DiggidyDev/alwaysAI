@@ -1,6 +1,7 @@
 {
   "models": {
-    "alwaysai/res10_300x300_ssd_iter_140000": 7
+    "alwaysai/res10_300x300_ssd_iter_140000": 7,
+    "alwaysai/ssd_mobilenet_v2_oidv4": 1
   },
   "scripts": {
     "start": "python run.py"
