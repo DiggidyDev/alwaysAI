@@ -84,7 +84,7 @@ class Commands(commands.Cog):
         """
         await ctx.send("~ W.I.P ~")
 
-    @commands.command()
+    @commands.command(aliases=["search"])
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
