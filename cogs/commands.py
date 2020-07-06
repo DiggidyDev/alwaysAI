@@ -1,15 +1,13 @@
 import re
+from io import BytesIO
 from subprocess import Popen, PIPE
 
-import discord
-from discord.ext import commands
-import numpy as np
-
-from io import BytesIO
-from PIL import Image
-
 import cv2
+import discord
 import edgeiq
+import numpy as np
+from PIL import Image
+from discord.ext import commands
 
 
 class Commands(commands.Cog):
