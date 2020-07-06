@@ -1,5 +1,9 @@
+import discord
 from discord.ext import commands
 import numpy as np
+
+from io import BytesIO
+from PIL import Image
 
 import cv2
 import edgeiq
@@ -35,7 +39,12 @@ class Commands(commands.Cog):
 
         # TODO Run the model for multiple images
         # TODO Find a way to send bytes img to Discord
-        await ctx.send(file=None)
+        with Image.fromarray(image) as im:
+            output_buffer = BytesIO()
+            im.save(output_buffer, "png")
+            output_buffer.seek(0)
+
+        await ctx.send(file=discord.File(fp=output_buffer, filename="results.png"))
 
 
 def setup(bot):
