@@ -38,7 +38,7 @@ class Owner(commands.Cog):
                               colour=self.colour)
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=["c"], hidden=True)
+    @commands.command(aliases=["c", "cogs"], hidden=True)
     async def cog(self, ctx, variant, *cog_list):
         """
         :param ctx: Discord Context class

@@ -11,6 +11,9 @@ from discord.ext import commands
 
 
 class Commands(commands.Cog):
+    # TODO Add in model list command
+    # TODO Install more models
+    # TODO Model install command - owner only
 
     def __init__(self, bot):
         self.bot = bot
@@ -62,7 +65,8 @@ class Commands(commands.Cog):
                 meta = zip(objects, links)
 
                 for o, l in meta:
-                    self.bot.lookup[o] = "https://alwaysai.co/docs/{}".format(l)  # Assign the object's URL to the object
+                    self.bot.lookup[o] = "https://alwaysai.co/docs/{}".format(
+                        l)  # Assign the object's URL to the object
 
             self.bot.docs = " ".join(
                 sections)  # Concatenating each of the sections: attribute, function, method, module, class
@@ -111,44 +115,57 @@ class Commands(commands.Cog):
 
         filtered_results = results_count_true - results_count
         if filtered_results > 0:
-            embed.set_footer(text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
+            embed.set_footer(
+                text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
 
         await ctx.send(embed=embed)
 
     # TODO Add in nicer error message if user doesn't define a model
-    # TODO Add in model list command
-    # TODO Install more models
-    # TODO Model install command - owner only
+    # TODO Add custom error for no image sent
+    # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
-        # Getting image and converting it to appropriate data type
-        img_bytes = await ctx.message.attachments[0].read()  # TODO Run the model for multiple images
-        nparr = np.fromstring(img_bytes, np.uint8)
-        img_np = cv2.imdecode(nparr, 1)
+        await ctx.message.delete()  # TODO Maybe move this after doing error messages
 
-        # AAI Magic
-        obj_detect = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
-        obj_detect.load(engine=edgeiq.Engine.DNN)
-        centroid_tracker = edgeiq.CentroidTracker(deregister_frames=100, max_distance=50)
+        for img in ctx.message.attachments:  # Iterating through each image in the message - only works for mobile
 
-        results = obj_detect.detect_objects(img_np, confidence_level=confidence)
-        objects = centroid_tracker.update(results.predictions)
+            # Getting image and converting it to appropriate data type
+            img_bytes = await img.read()
+            nparr = np.fromstring(img_bytes, np.uint8)
+            img_np = cv2.imdecode(nparr, 1)
 
-        predictions = []
-        for (object_id, prediction) in objects.items():
-            prediction.label = "Object {}".format(object_id)
-            predictions.append(prediction)
+            # AAI Magic
+            obj_detect = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
+            obj_detect.load(engine=edgeiq.Engine.DNN)
+            centroid_tracker = edgeiq.CentroidTracker(deregister_frames=100, max_distance=50)
 
-        image = edgeiq.markup_image(img_np, predictions)
+            results = obj_detect.detect_objects(img_np, confidence_level=confidence)
+            objects = centroid_tracker.update(results.predictions)
 
-        # TODO Run the model for multiple images
-        # Converting magic for Discord
-        with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
-            output_buffer = BytesIO()
-            im.save(output_buffer, "png")
-            output_buffer.seek(0)
+            predictions = []
+            for (object_id, prediction) in objects.items():
+                prediction.label = "Object {}".format(object_id)
+                predictions.append(prediction)
 
-        await ctx.send(file=discord.File(fp=output_buffer, filename="results.png"))
+            image = edgeiq.markup_image(img_np, predictions)
+
+            # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
+            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
+                output_buffer = BytesIO()
+                im.save(output_buffer, "png")
+                output_buffer.seek(0)
+
+            disc_image = discord.File(fp=output_buffer, filename="results.png")
+
+            embed = discord.Embed(title="",
+                                  description="**User ID:** {}\n\n"
+                                              "**Model:** {}\n"
+                                              "**Confidence:** {}".format(ctx.author.id, model, confidence),
+                                  colour=0xC63D3D)
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            embed.set_image(url="attachment://results.png")
+            embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
+            await ctx.send(embed=embed, file=disc_image)
 
 
 def setup(bot):
