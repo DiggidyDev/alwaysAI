@@ -11,6 +11,9 @@ from discord.ext import commands
 
 
 class Commands(commands.Cog):
+    # TODO Add in model list command
+    # TODO Install more models
+    # TODO Model install command - owner only
 
     def __init__(self, bot):
         self.bot = bot
@@ -117,10 +120,8 @@ class Commands(commands.Cog):
         await ctx.send(embed=embed)
 
     # TODO Add in nicer error message if user doesn't define a model
-    # TODO Add in model list command
-    # TODO Install more models
-    # TODO Model install command - owner only
     # TODO Add custom error for no image sent
+    # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
         await ctx.message.delete()  # TODO Maybe move this after doing error messages
