@@ -124,7 +124,6 @@ class Commands(commands.Cog):
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
-        await ctx.message.delete()  # TODO Maybe move this after doing error messages
 
         for img in ctx.message.attachments:  # Iterating through each image in the message - only works for mobile
 
@@ -165,7 +164,8 @@ class Commands(commands.Cog):
             embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
             await ctx.send(embed=embed, file=disc_image)
-
+            
+        await ctx.message.delete()  # TODO Maybe move this after doing error messages
 
 def setup(bot):
     bot.add_cog(Commands(bot))
