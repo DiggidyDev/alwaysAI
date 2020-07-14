@@ -36,7 +36,8 @@ class Commands(commands.Cog):
             self.bot.lookup = {}
             sections = []
 
-            for section in docs[0].decode("utf-8").split("py:")[1:]:
+            # Doesn't like UTF-8 codec, hence \/
+            for section in docs[0].decode("cp1252").split("py:")[1:]:
 
                 sectors = section.split()  # Removing whitespace
 
