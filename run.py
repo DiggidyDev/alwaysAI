@@ -12,6 +12,7 @@ class Bot(commands.Bot):
     async def on_ready(self):
         print("Name:\t{0}\nID:\t{1}".format(super().user.name, super().user.id))
 
+    # TODO Make this 20* better
     async def on_command_error(self, ctx, exception):
         if isinstance(exception, commands.errors.CommandNotFound):
             return
