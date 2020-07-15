@@ -32,5 +32,5 @@ if __name__ == "__main__":
     bot.remove_command("help")
     bot.load_cog("cogs.owner")
     bot.load_cog("cogs.commands")
-    bot.load_cog("cogs.events")
+    bot.load_cog("cogs.model")
     bot.run()
