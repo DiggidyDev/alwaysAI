@@ -5,3 +5,4 @@ The unofficial official alwaysAI discord bot repo!
 * discord.py
 * psutil
 * sphinx
+* Pillow

@@ -1,12 +1,6 @@
 import re
-from io import BytesIO
 from subprocess import Popen, PIPE
-
-import cv2
 import discord
-import edgeiq
-import numpy as np
-from PIL import Image
 from discord.ext import commands
 
 
@@ -75,7 +69,7 @@ class Commands(commands.Cog):
         indices = [(i.span()[0], i.span()[1]) for i in pattern.finditer(
             self.bot.docs)]  # Getting the indices of each search result in the sections' concatenation
 
-        # Probably one of the more disgusting lines :/
+        # Probably one of the more disgusting lines :/ (I agree, my brain can't process the chaos)
         # Finds the entire word that was found - characters up to the previous and next space.
         # Sorts it alphabetically (and case-sensitively)
         suggestions = sorted(
@@ -88,9 +82,9 @@ class Commands(commands.Cog):
     async def help(self, ctx):
         """
         Just a help command that'll be useful some day soon.
-
-        :param ctx:
-        :return:
+        We should soooo do like *help <cmd> and then show what args each command takes
+        It'd look funky - like how Dpys docs are really nice
+        Sorry I just reaaaally like the docs
         """
         await ctx.send("~ W.I.P ~")
 
@@ -120,54 +114,6 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # TODO Add in nicer error message if user doesn't define a model
-    # TODO Add custom error for no image sent
-    # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
-    # TODO Fix Alpha Channel issue
-    @commands.command()
-    async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
-
-        for img in ctx.message.attachments:  # Iterating through each image in the message - only works for mobile
-
-            # Getting image and converting it to appropriate data type
-            img_bytes = await img.read()
-            np_arr = np.fromstring(img_bytes, np.uint8)
-            img_np = cv2.imdecode(np_arr, 1)
-
-            # AAI Magic
-            obj_detect = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
-            obj_detect.load(engine=edgeiq.Engine.DNN)
-            centroid_tracker = edgeiq.CentroidTracker(deregister_frames=100, max_distance=50)
-
-            results = obj_detect.detect_objects(img_np, confidence_level=confidence)
-            objects = centroid_tracker.update(results.predictions)
-
-            predictions = []
-            for (object_id, prediction) in objects.items():
-                prediction.label = "Object {}".format(object_id)
-                predictions.append(prediction)
-
-            image = edgeiq.markup_image(img_np, predictions)
-
-            # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
-            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
-                output_buffer = BytesIO()
-                im.save(output_buffer, "png")
-                output_buffer.seek(0)
-
-            disc_image = discord.File(fp=output_buffer, filename="results.png")
-
-            embed = discord.Embed(title="",
-                                  description="**User ID:** {}\n\n"
-                                              "**Model:** {}\n"
-                                              "**Confidence:** {}".format(ctx.author.id, model, confidence),
-                                  colour=0xC63D3D)
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_image(url="attachment://results.png")
-            embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
-            await ctx.send(embed=embed, file=disc_image)
-            
-        await ctx.message.delete()  # TODO Maybe move this after doing error messages
 
 def setup(bot):
     bot.add_cog(Commands(bot))
