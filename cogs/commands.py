@@ -1,3 +1,4 @@
+import json
 import re
 from io import BytesIO
 from subprocess import Popen, PIPE
@@ -19,6 +20,23 @@ class Commands(commands.Cog):
         self.bot = bot
         self.bot.docs = None
         self.bot.lookup = None
+
+    def get_model_info(self, model_name, *req_data):
+        """
+        :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
+        :param req_data: String, multiple arguments that are keys for the data you want. E.g. 'website_url'
+        :return: List, contains strings relevant to the data you requested and in the same order
+        """
+        with open("models/{}/alwaysai.model.json".format(model_name), "r") as jsonfile:
+            encoded_data = jsonfile.read()
+            decoded_data = json.loads(encoded_data)
+
+        if len(req_data) != 0:
+            output = [decoded_data[data] for data in req_data]
+        else:
+            output = decoded_data
+
+        return output
 
     def get_docs(self):
 
@@ -75,7 +93,7 @@ class Commands(commands.Cog):
         indices = [(i.span()[0], i.span()[1]) for i in pattern.finditer(
             self.bot.docs)]  # Getting the indices of each search result in the sections' concatenation
 
-        # Probably one of the more disgusting lines :/
+        # Probably one of the more disgusting lines :/ (I agree, my brain can't process the chaos)
         # Finds the entire word that was found - characters up to the previous and next space.
         # Sorts it alphabetically (and case-sensitively)
         suggestions = sorted(
@@ -88,9 +106,9 @@ class Commands(commands.Cog):
     async def help(self, ctx):
         """
         Just a help command that'll be useful some day soon.
-
-        :param ctx:
-        :return:
+        We should soooo do like *help <cmd> and then show what args each command takes
+        It'd look funky - like how Dpys docs are really nice
+        Sorry I just reaaaally like the docs
         """
         await ctx.send("~ W.I.P ~")
 
@@ -125,7 +143,7 @@ class Commands(commands.Cog):
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     # TODO Fix Alpha Channel issue
     @commands.command()
-    async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
+    async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
 
         for img in ctx.message.attachments:  # Iterating through each image in the message - only works for mobile
 
@@ -166,8 +184,9 @@ class Commands(commands.Cog):
             embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
             await ctx.send(embed=embed, file=disc_image)
-            
-        await ctx.message.delete()  # TODO Maybe move this after doing error messages
+
+        await ctx.message.delete()  # TODO Maybe move this - actually its probably best here...
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))
