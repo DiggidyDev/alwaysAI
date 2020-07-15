@@ -8,6 +8,6 @@
     "alwaysai/enet": 1
   },
   "scripts": {
-    "start": "python run.py"
+    "start": "python bot.py"
   }
 }
