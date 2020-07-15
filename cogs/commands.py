@@ -123,6 +123,7 @@ class Commands(commands.Cog):
     # TODO Add in nicer error message if user doesn't define a model
     # TODO Add custom error for no image sent
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
+    # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection
 
@@ -130,8 +131,8 @@ class Commands(commands.Cog):
 
             # Getting image and converting it to appropriate data type
             img_bytes = await img.read()
-            nparr = np.fromstring(img_bytes, np.uint8)
-            img_np = cv2.imdecode(nparr, 1)
+            np_arr = np.fromstring(img_bytes, np.uint8)
+            img_np = cv2.imdecode(np_arr, 1)
 
             # AAI Magic
             obj_detect = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
