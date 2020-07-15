@@ -1,0 +1,33 @@
+{
+  "id": "alwaysai/enet",
+  "accuracy": "",
+  "description": "Semantic Segmentation model trained on 20 classes, Background,Road, Sidewalk Building, Wall, Fence, Pole, TrafficLight, TrafficSign, Vegetation, Terrain, Sky, Person, Rider, Car, Truck, Bus, Train, Motorcycle, Bicycle using the Cityscapes Dataset.",
+  "inference_time": null,
+  "dataset": "",
+  "license": "Creative Commons",
+  "mean_average_precision_top_1": null,
+  "mean_average_precision_top_5": null,
+  "public": true,
+  "website_url": "https://github.com/TimoSaemann/ENet",
+  "model_parameters": {
+    "framework_type": "enet",
+    "config_file": "",
+    "size": [
+      1024,
+      512
+    ],
+    "model_file": "models/enet-model.net",
+    "label_file": "labels/enet-classes.txt",
+    "colors_file": "labels/enet-colors.txt",
+    "scalefactor": 0.0039216,
+    "mean": [
+      0,
+      0,
+      0
+    ],
+    "crop": false,
+    "swaprb": true,
+    "purpose": "SemanticSegmentation"
+  },
+  "version": 1
+}

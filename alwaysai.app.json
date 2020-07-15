@@ -4,7 +4,8 @@
     "alwaysai/ssd_mobilenet_v2_oidv4": 1,
     "alwaysai/agenet": 9,
     "alwaysai/fcn_resnet18_cityscapes_512x256": 1,
-    "alwaysai/human-pose": 7
+    "alwaysai/human-pose": 7,
+    "alwaysai/enet": 1
   },
   "scripts": {
     "start": "python run.py"
