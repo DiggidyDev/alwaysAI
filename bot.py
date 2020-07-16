@@ -17,7 +17,9 @@ class Bot(commands.Bot):
         if isinstance(exception, commands.errors.CommandNotFound):
             return
         else:
-            await ctx.send("`ERROR: {} - {}`".format(type(exception).__name__, exception))
+            await ctx.send("An error occurred and has been logged\n"
+                           "`ERROR: {} - {}`".format(type(exception).__name__, exception))
+            # TODO Log using traceback
 
     def run(self):
         super().run(open("token.secret", "r").read())
