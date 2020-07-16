@@ -56,6 +56,7 @@ def detection_base(model, confidence, image_array):
     return image, results
 
 
+# TODO Make font scale with image size - look into getTextSize() potentially for width of text
 def classification_base(model, confidence, image_array):
     classifier = edgeiq.Classification(model)
     classifier.load(engine=edgeiq.Engine.DNN)
@@ -66,6 +67,7 @@ def classification_base(model, confidence, image_array):
                                       round(results.predictions[0].confidence * 100, 2))
         cv2.putText(image_array, image_text, (5, 25), cv2.QT_FONT_NORMAL, 0.7, (0, 0, 255), 2)
 
+        return image_array, results, image_text
     return image_array, results
 
 
@@ -79,6 +81,7 @@ def pose_base(model, image_array):
     return image, results
 
 
+# TODO Find a way to show the legend - maybe HTML -> PNG and then combine the image with that?
 def semantic_base(model, image_array):
     semantic_segmentation = edgeiq.SemanticSegmentation(model)
     semantic_segmentation.load(engine=edgeiq.Engine.DNN)
@@ -86,6 +89,7 @@ def semantic_base(model, image_array):
     results = semantic_segmentation.segment_image(image_array)
     mask = semantic_segmentation.build_image_mask(results.class_map)
     image = edgeiq.blend_images(image_array, mask, 0.5)
+    print(semantic_segmentation.build_legend())
 
     return image, results
 
@@ -99,8 +103,6 @@ class Model(commands.Cog):
     # TODO Add custom error for no image sent
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     # TODO Fix Alpha Channel issue
-    # TODO Add more info for segmentation (colour legend?)
-    # TODO Remove confidence from embed if it doesn't matter for the model - PoseEstimation + SemanticSegmentation
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
         category = get_model_info(model, "model_parameters_purpose")[0]
@@ -112,16 +114,22 @@ class Model(commands.Cog):
             np_arr = np.fromstring(img_bytes, np.uint8)
             img_np = cv2.imdecode(np_arr, 1)
 
+            embed_output = ""
+
             if category == "ObjectDetection":
                 image, results = detection_base(model, confidence, img_np)
+                embed_output = "\n**Confidence:** {}".format(confidence)
             elif category == "Classification":
-                image, results = classification_base(model, confidence, img_np)
+                image, results, text = classification_base(model, confidence, img_np)
+                embed_output = "\n**Confidence:** {}\n\n**Label:** {}".format(confidence, text)
             elif category == "PoseEstimation":
                 image, results = pose_base(model, img_np)
             elif category == "SemanticSegmentation":
                 image, results = semantic_base(model, img_np)
             else:
                 return  # Make fancy message?
+
+            embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
             # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
             with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
@@ -131,11 +139,7 @@ class Model(commands.Cog):
 
             disc_image = discord.File(fp=output_buffer, filename="results.png")
 
-            embed = discord.Embed(title="",
-                                  description="**User ID:** {}\n\n"
-                                              "**Model:** {}\n"
-                                              "**Confidence:** {}".format(ctx.author.id, model, confidence),
-                                  colour=0xC63D3D)
+            embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
             embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
