@@ -1,3 +1,5 @@
+import traceback
+
 import discord
 from discord.ext import commands
 
@@ -12,14 +14,13 @@ class Bot(commands.Bot):
     async def on_ready(self):
         print("Name:\t{0}\nID:\t{1}".format(super().user.name, super().user.id))
 
-    # TODO Make this 20* better
+    # TODO Make this log errors with the command + args used
     async def on_command_error(self, ctx, exception):
         if isinstance(exception, commands.errors.CommandNotFound):
             return
         else:
-            await ctx.send("An error occurred and has been logged\n"
-                           "`ERROR: {} - {}`".format(type(exception).__name__, exception))
-            # TODO Log using traceback
+            tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__, 4)
+            await ctx.send("An unexpected error occurred ~\n```Python\n{}```".format(''.join(tb_lines)))
 
     def run(self):
         super().run(open("token.secret", "r").read())
