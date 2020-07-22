@@ -20,22 +20,20 @@ def flatten(d, parent_key="", sep="_"):
     return dict(items)
 
 
-def get_model_info(model_name, *req_data):
+def get_model_info(model_name):
     """
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
-    :param req_data: String, multiple arguments that are keys for the data you want. E.g. 'website_url'
-    :return: List, contains the data you requested in the same order
+    :return Dict, contains the data you requested in the same order
     """
     with open("models/{}/alwaysai.model.json".format(model_name), "r") as jsonfile:
         encoded_data = jsonfile.read()
         decoded_data = flatten(json.loads(encoded_data))
 
-    if len(req_data) != 0:
-        output = [decoded_data[data] for data in req_data if data in decoded_data.keys()]
-    else:
-        output = decoded_data
+        for key in decoded_data:
+            if decoded_data[key] == "":
+                decoded_data[key] = None
 
-    return output
+        return decoded_data
 
 
 def detection_base(model, confidence, image_array):
@@ -105,9 +103,12 @@ class Model(commands.Cog):
     # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
-        category = get_model_info(model, "model_parameters_purpose")[0]
+        category = get_model_info(model)["model_parameters_purpose"]
+        attachments = ctx.message.attachments
 
-        for img in ctx.message.attachments:  # Iterating through each image in the message - only works for mobile
+        await ctx.message.delete()
+
+        for img in attachments:  # Iterating through each image in the message - only works for mobile
 
             # Getting image and converting it to appropriate data type
             img_bytes = await img.read()
@@ -144,8 +145,6 @@ class Model(commands.Cog):
             embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
             await ctx.send(embed=embed, file=disc_image)
-
-        await ctx.message.delete()  # TODO Maybe move this - actually its probably best here...
 
 
 def setup(bot):

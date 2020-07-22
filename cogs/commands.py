@@ -3,6 +3,8 @@ from subprocess import Popen, PIPE
 import discord
 from discord.ext import commands
 
+from cogs.model import get_model_info
+
 
 class Commands(commands.Cog):
     # TODO Add in model list command
@@ -111,6 +113,35 @@ class Commands(commands.Cog):
         if filtered_results > 0:
             embed.set_footer(
                 text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
+
+        await ctx.send(embed=embed)
+
+    # TODO Error for no model name
+    # TODO Error for invalid model name
+    # TODO Potential char limiter needed for long descriptions due to embed char limitations
+    @commands.command(aliases=["modelhelp", "mhelp", "mh"])
+    async def model_help(self, ctx, model_name=None):
+        if model_name is None:  # No specified model so show list of models
+            # TODO Actually list the models with links and a functioning interactive reaction menu
+            embed = discord.Embed(title="Test", description="LIST OF MODELS")
+            print(get_model_info("alwaysai/enet"))
+        else:
+            data = get_model_info(model_name)
+            description = "**Description:** {}\n" \
+                          "**Category:** {}\n" \
+                          "**License:** {}\n\n" \
+                          "**Inference Time:** {}\n" \
+                          "**Framework:** {}\n" \
+                          "**Dataset:** {}\n" \
+                          "**Version:** {}".format(data["description"],
+                                                   data["model_parameters_purpose"],
+                                                   data["license"],
+                                                   data["inference_time"],
+                                                   data["model_parameters_framework_type"],
+                                                   data["dataset"],
+                                                   data["version"])
+
+            embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
 
         await ctx.send(embed=embed)
 
