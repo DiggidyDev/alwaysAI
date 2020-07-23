@@ -16,7 +16,7 @@ class Bot(commands.Bot):
 
     # TODO Make this log errors with the command + args used
     async def on_command_error(self, ctx, exception):
-        if isinstance(exception, commands.errors.CommandNotFound):
+        if isinstance(exception, commands.errors.CommandNotFound) or hasattr(ctx.cog, "cog_command_error"):
             return
         else:
             tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__, 4)
