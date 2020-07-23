@@ -8,6 +8,8 @@ import numpy as np
 from PIL import Image
 from discord.ext import commands
 
+from bot import generate_user_error_embed, send_traceback
+
 
 def flatten(d, parent_key="", sep="_"):
     items = []
@@ -97,20 +99,6 @@ class Model(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def cog_command_error(self, ctx, error):
-        # Discord errors
-        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.send("`ERROR: MissingRequiredArgument - please specify a model name.`")
-
-        # Wrapped errors e.g:
-        # discord.ext.commands.errors.CommandInvokeError: Command raised an exception: FileNotFoundError: [Errno 2] No
-        # such file or directory: 'example.json'
-        
-        error = getattr(error, "original", error)
-
-        if isinstance(error, FileNotFoundError):
-            await ctx.send("`ERROR: MissingModelName - please specify a valid model name.`")
-
     # TODO Add in nicer error message if user doesn't define a model
     # TODO Add custom error for no image sent
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
@@ -121,7 +109,11 @@ class Model(commands.Cog):
         category = get_model_info(model)["model_parameters_purpose"]
 
         if len(attachments) == 0:
-            await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
+            message = "```NoAttachment - please upload an image when running the model command```\n\n" \
+                      "In order to upload an image with a message you can:\n" \
+                      "1. Paste an image from your clipboard\n" \
+                      "2. Click the + button to the left of where you type your message"
+            await generate_user_error_embed(ctx, message)
             return
 
         for img in attachments:  # Iterating through each image in the message - only works for mobile
@@ -163,6 +155,31 @@ class Model(commands.Cog):
 
             await ctx.message.delete()
             await ctx.send(embed=embed, file=disc_image)
+
+    @model.error
+    async def model_error(self, ctx, error):
+        error_handled = False
+
+        # Discord errors
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            message = "```MissingModelName - please specify a model name```\n\n" \
+                      "For example: `*model alwaysai/enet`\n" \
+                      "This will run the `alwaysai/enet` model on the image you sent with the message"
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
+        error = getattr(error, "original", error)
+
+        if isinstance(error, FileNotFoundError):
+            message = "```InvalidModelName - please specify a valid model name```\n\n" \
+                      "For example: `*model alwaysai/enet`\n" \
+                      "You can find all available models by running `*mhelp`"
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
 
 
 def setup(bot):
