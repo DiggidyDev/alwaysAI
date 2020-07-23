@@ -36,6 +36,30 @@ def get_model_info(model_name):
         return decoded_data
 
 
+def get_model_by_alias(alias):
+    aliases = {
+        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
+        ("alwaysai/enet", "enet"): "alwaysai/enet",
+        ("alwaysai/fcn_resnet18_cityscapes_512x256",
+         "fcn_resnet18_cityscapes_512x256", "cityscapes", "city",
+         "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
+        ("alwaysai/human-pose", "human", "human-pose", "human_pose",
+         "pose"): "alwaysai/human-pose",
+        ("alwaysai/res10_300x300_ssd_iter_140000",
+         "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd",
+         "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
+        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4",
+         "mobilenet", "ssd_mobile", "mobile",
+         "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
+    }
+
+    for a, m in aliases.items():
+        if alias in a:
+            return m
+
+    return None
+
+
 def detection_base(model, confidence, image_array):
     detector = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
     detector.load(engine=edgeiq.Engine.DNN)
@@ -51,7 +75,7 @@ def detection_base(model, confidence, image_array):
 
     image = edgeiq.markup_image(image_array, predictions)
 
-    return image, results
+    return image, results, None
 
 
 # TODO Make font scale with image size - look into getTextSize() potentially for width of text
@@ -66,7 +90,7 @@ def classification_base(model, confidence, image_array):
         cv2.putText(image_array, image_text, (5, 25), cv2.QT_FONT_NORMAL, 0.7, (0, 0, 255), 2)
 
         return image_array, results, image_text
-    return image_array, results
+    return image_array, results, None
 
 
 def pose_base(model, image_array):
@@ -118,6 +142,7 @@ class Model(commands.Cog):
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
         attachments = ctx.message.attachments
+        model = get_model_by_alias(model)
         category = get_model_info(model)["model_parameters_purpose"]
 
         if len(attachments) == 0:
@@ -133,16 +158,19 @@ class Model(commands.Cog):
 
             embed_output = ""
 
-            if category == "ObjectDetection":
-                image, results = detection_base(model, confidence, img_np)
+            categories = {
+                "Classification": classification_base,
+                "ObjectDetection": detection_base,
+                "PoseEstimation": pose_base,
+                "SemanticSegmentation": semantic_base
+            }
+
+            if category in ["ObjectDetection", "Classification"]:
+                image, results, text = categories[category](model, confidence, img_np)
                 embed_output = "\n**Confidence:** {}".format(confidence)
-            elif category == "Classification":
-                image, results, text = classification_base(model, confidence, img_np)
-                embed_output = "\n**Confidence:** {}\n\n**Label:** {}".format(confidence, text)
-            elif category == "PoseEstimation":
-                image, results = pose_base(model, img_np)
-            elif category == "SemanticSegmentation":
-                image, results = semantic_base(model, img_np)
+                embed_output += "\n\n**Label:** {}".format(text) if text else ""
+            elif category in ["PoseEstimation", "SemanticSegmentation"]:
+                image, results = categories[category](model, img_np)
             else:
                 return  # Make fancy message?
 
