@@ -19,7 +19,6 @@ async def model_help_react(message):
 
 
 class Commands(commands.Cog):
-    # TODO Add in model list command
     # TODO Install more models
     # TODO Model install command - owner only
 
@@ -128,8 +127,6 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # TODO Error for no model name
-    # TODO Error for invalid model name
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):

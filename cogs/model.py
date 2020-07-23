@@ -99,8 +99,6 @@ class Model(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # TODO Add in nicer error message if user doesn't define a model
-    # TODO Add custom error for no image sent
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     # TODO Fix Alpha Channel issue
     @commands.command()
