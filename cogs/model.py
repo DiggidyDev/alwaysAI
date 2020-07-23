@@ -168,18 +168,8 @@ class Model(commands.Cog):
                                                 "Inference time is correct for the amount of time AAI took*"
                                 embed.description = embed_output
                                 resized = True
-
-                        elif e.status == 404:
-                            message = "```Error 404```\n\n" \
-                                      "Usually occurs if you delete your message while the bot is still running" \
-                                      "a model.\n" \
-                                      "Can generally be ignored. If something else caused this then please contact" \
-                                      "the bot developers."
-                            await generate_user_error_embed(ctx, message)
-
                         else:
-                            await ctx.send(e.status)
-                            await send_traceback(ctx, e)
+                            raise e
 
         await ctx.message.delete()
 
@@ -187,30 +177,13 @@ class Model(commands.Cog):
     async def model_error(self, ctx, error):
         error_handled = False
 
-        # Discord errors
+        # Singular errors
         if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
             message = "```MissingModelName - please specify a model name```\n\n" \
                       "For example: `*model alwaysai/enet`\n" \
                       "This will run the `alwaysai/enet` model on the image you sent with the message"
             await generate_user_error_embed(ctx, message)
             error_handled = True
-
-        if isinstance(error, discord.errors.HTTPException):
-            if error.status == 404:
-                message = "```Error 404```\n\n" \
-                          "Usually occurs if you delete your message while the bot is still running" \
-                          "a model.\n" \
-                          "Can generally be ignored. If something else caused this then please contact" \
-                          "the bot developers."
-                await generate_user_error_embed(ctx, message)
-
-            if error.status == 403:
-                message = "```Error 403```\n\n" \
-                          "Usually occurs if you delete your message while the bot is still running" \
-                          "a model.\n" \
-                          "Can generally be ignored. If something else caused this then please contact" \
-                          "the bot developers."
-                await generate_user_error_embed(ctx, message)
 
         # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
         error = getattr(error, "original", error)
@@ -221,6 +194,23 @@ class Model(commands.Cog):
                       "You can find all available models by running `*mhelp`"
             await generate_user_error_embed(ctx, message)
             error_handled = True
+
+        if isinstance(error, discord.errors.Forbidden):
+            message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
+                          "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                          "Can generally be ignored. If something else caused this then please contact " \
+                          "the bot developers."
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if isinstance(error, discord.errors.HTTPException):
+            if error.status == 404:
+                message = "```Error 404 Not Found - Unknown Message```\n\n" \
+                          "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                          "Can generally be ignored. If something else caused this then please contact " \
+                          "the bot developers."
+                await generate_user_error_embed(ctx, message)
+                error_handled = True
 
         if not error_handled:
             await send_traceback(ctx, error)
