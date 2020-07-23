@@ -1,7 +1,19 @@
+import json
 import re
 from subprocess import Popen, PIPE
+
 import discord
 from discord.ext import commands
+
+from cogs.model import get_model_info
+
+
+async def model_help_react(message):
+    await message.add_reaction("\U000023ea")  # Left fast
+    await message.add_reaction("\U00002b05")  # Left
+    await message.add_reaction("\U000027a1")  # Right
+    await message.add_reaction("\U000023e9")  # Right fast
+    await message.add_reaction("<:cross:671116183780720670>")  # Cross
 
 
 class Commands(commands.Cog):
@@ -113,6 +125,94 @@ class Commands(commands.Cog):
                 text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
 
         await ctx.send(embed=embed)
+
+    # TODO Error for no model name
+    # TODO Error for invalid model name
+    # TODO Potential char limiter needed for long descriptions due to embed char limitations
+    @commands.command(aliases=["modelhelp", "mhelp", "mh"])
+    async def model_help(self, ctx, model_name=None):
+        if model_name is None:  # No specified model so show list of models
+            with open("alwaysai.app.json", "r") as jsonfile:
+                encoded_data = jsonfile.read()
+                decoded_data = json.loads(encoded_data)
+
+            # Formatting all models into a 2D list - each inner list is an unformatted page
+            models_per_page = 10
+            model_list = list(decoded_data["models"].keys())
+            models_split = [model_list[x:x + models_per_page] for x in range(0, len(model_list), models_per_page)]
+
+            # Splitting the page lists into page strings and formatting them to make em look good
+            pages = ["`{}`\n\u200b".format("`\n`".join(inner_list)) for inner_list in models_split]
+            current_page_num = 0
+
+            if len(pages) == 0:
+                await ctx.send("`ERROR: MissingModels - no models have been installed for this bot.`")
+                return
+
+            title = "**Model List**"
+            colour = 0x8b0048
+
+            embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+            embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+
+            embed_message = await ctx.send(embed=embed)
+            await model_help_react(embed_message)
+
+            # Logic behind whether a user reaction is accepted or not
+            def check(reaction, user):
+                valid_emoji_list = ["⏪", "⬅", "➡", "⏩", "<:cross:671116183780720670>"]
+                return str(reaction) in valid_emoji_list and str(reaction.message) == str(embed_message) and \
+                       user == ctx.author
+
+            # Wait for a users reaction
+            while True:
+                user_reactions = await self.bot.wait_for("reaction_add", check=check)
+                emoji = str(user_reactions[0])
+
+                page_changed = True
+
+                if emoji == "<:cross:671116183780720670>":  # Close model_help embed
+                    await embed_message.delete()
+                    return
+
+                elif emoji == "⏪" and current_page_num != 0:  # Go to first page
+                    current_page_num = 0
+                elif emoji == "⬅" and current_page_num != 0:  # Go back a page
+                    current_page_num -= 1
+                elif emoji == "➡" and current_page_num != len(pages) - 1:  # Go forward a page
+                    current_page_num += 1
+                elif emoji == "⏩" and current_page_num != len(pages) - 1:  # Go to last page
+                    current_page_num = len(pages) - 1
+                else:
+                    page_changed = False
+
+                if page_changed:  # Only need to edit the message if the page needs to be changed
+                    embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+                    embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+                    # TODO Fix up how reaction removal works to be more efficient
+                    await embed_message.clear_reactions()
+                    await embed_message.edit(embed=embed)
+                    await model_help_react(embed_message)
+
+        else:
+            # TODO Add local image thumbnail to make the command more appealing to look at
+            data = get_model_info(model_name)
+            description = "**Description:** {}\n" \
+                          "**Category:** {}\n" \
+                          "**License:** {}\n\n" \
+                          "**Inference Time:** {}\n" \
+                          "**Framework:** {}\n" \
+                          "**Dataset:** {}\n" \
+                          "**Version:** {}".format(data["description"],
+                                                   data["model_parameters_purpose"],
+                                                   data["license"],
+                                                   data["inference_time"],
+                                                   data["model_parameters_framework_type"],
+                                                   data["dataset"],
+                                                   data["version"])
+
+            embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
+            await ctx.send(embed=embed)
 
 
 def setup(bot):
