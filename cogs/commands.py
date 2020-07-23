@@ -5,6 +5,8 @@ from subprocess import Popen, PIPE
 import discord
 from discord.ext import commands
 
+from bot import generate_user_error_embed, send_traceback
+from cogs import model
 from cogs.model import get_model_info
 
 
@@ -17,7 +19,6 @@ async def model_help_react(message):
 
 
 class Commands(commands.Cog):
-    # TODO Add in model list command
     # TODO Install more models
     # TODO Model install command - owner only
 
@@ -126,8 +127,6 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # TODO Error for no model name
-    # TODO Error for invalid model name
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
@@ -146,7 +145,10 @@ class Commands(commands.Cog):
             current_page_num = 0
 
             if len(pages) == 0:
-                await ctx.send("`ERROR: MissingModels - no models have been installed for this bot.`")
+                message = "```MissingModels - no models have been installed for this bot.```\n\n" \
+                          "Unless you own the bot there's not much you can do.\n" \
+                          "Try to contact the owner of the bot if you ever see this bug."
+                await generate_user_error_embed(ctx, message)
                 return
 
             title = "**Model List**"
@@ -214,6 +216,22 @@ class Commands(commands.Cog):
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
             await ctx.send(embed=embed)
 
+    @model_help.error
+    async def model_help_error(self, ctx, error):
+        error_handled = False
+
+        # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
+        error = getattr(error, "original", error)
+
+        if isinstance(error, FileNotFoundError):
+            message = "```InvalidModelName - please specify a valid model name```\n\n" \
+                      "For example: `*mhelp alwaysai/enet`\n" \
+                      "You can find all available models by running `*mhelp`"
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
 
 def setup(bot):
     bot.add_cog(Commands(bot))
