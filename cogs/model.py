@@ -68,7 +68,7 @@ def classification_base(model, confidence, image_array):
         cv2.putText(image_array, image_text, (5, 25), cv2.QT_FONT_NORMAL, 0.7, (0, 0, 255), 2)
 
         return image_array, results, image_text
-    return image_array, results
+    return image_array, results, None
 
 
 def pose_base(model, image_array):
