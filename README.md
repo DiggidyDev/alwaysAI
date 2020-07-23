@@ -6,3 +6,6 @@ The unofficial official alwaysAI discord bot repo!
 * psutil
 * sphinx
 * Pillow
+
+## Setup
+Add a `token.secret` file to the repo and put within it the bots token.
