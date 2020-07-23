@@ -97,16 +97,32 @@ class Model(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_command_error(self, ctx, error):
+        # Discord errors
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            await ctx.send("`ERROR: MissingRequiredArgument - please specify a model name.`")
+
+        # Wrapped errors e.g:
+        # discord.ext.commands.errors.CommandInvokeError: Command raised an exception: FileNotFoundError: [Errno 2] No
+        # such file or directory: 'example.json'
+        
+        error = getattr(error, "original", error)
+
+        if isinstance(error, FileNotFoundError):
+            await ctx.send("`ERROR: MissingModelName - please specify a valid model name.`")
+
     # TODO Add in nicer error message if user doesn't define a model
     # TODO Add custom error for no image sent
     # TODO Scale down image if image too large ~ "Payload Too Large (error code: 40005): Request entity too large"
     # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
-        category = get_model_info(model)["model_parameters_purpose"]
         attachments = ctx.message.attachments
+        category = get_model_info(model)["model_parameters_purpose"]
 
-        await ctx.message.delete()
+        if len(attachments) == 0:
+            await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
+            return
 
         for img in attachments:  # Iterating through each image in the message - only works for mobile
 
@@ -144,6 +160,8 @@ class Model(commands.Cog):
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
             embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
+
+            await ctx.message.delete()
             await ctx.send(embed=embed, file=disc_image)
 
 
