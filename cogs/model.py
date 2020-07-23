@@ -1,5 +1,6 @@
 import collections
 import json
+import sys
 from io import BytesIO
 import cv2
 import discord
@@ -89,7 +90,7 @@ def semantic_base(model, image_array):
     results = semantic_segmentation.segment_image(image_array)
     mask = semantic_segmentation.build_image_mask(results.class_map)
     image = edgeiq.blend_images(image_array, mask, 0.5)
-    print(semantic_segmentation.build_legend())
+    # print(semantic_segmentation.build_legend())
 
     return image, results
 
@@ -103,6 +104,7 @@ class Model(commands.Cog):
     # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
+        await ctx.message.add_reaction("\U0001f50e")
         attachments = ctx.message.attachments
         category = get_model_info(model)["model_parameters_purpose"]
 
@@ -138,21 +140,48 @@ class Model(commands.Cog):
 
             embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
-            # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
-            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
-                output_buffer = BytesIO()
-                im.save(output_buffer, "png")
-                output_buffer.seek(0)
-
-            disc_image = discord.File(fp=output_buffer, filename="results.png")
-
             embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_image(url="attachment://results.png")
             embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
 
-            await ctx.message.delete()
-            await ctx.send(embed=embed, file=disc_image)
+            resized = False
+
+            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
+                while True:
+                    try:
+                        # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
+                        output_buffer = BytesIO()
+                        im.save(output_buffer, "png")
+                        output_buffer.seek(0)
+                        # print(sys.getsizeof(output_buffer))
+
+                        disc_image = discord.File(fp=output_buffer, filename="results.png")
+                        embed.set_image(url="attachment://results.png")
+
+                        await ctx.send(embed=embed, file=disc_image)
+                        break
+                    except discord.errors.HTTPException as e:  # Resize until no 413 error
+                        if e.status == 413:
+                            im = im.resize((round(im.width * 0.7), round(im.height * 0.7)))
+                            if not resized:
+                                embed_output += "\n\n*Some time was spent resizing this image for Discord\n" \
+                                                "Inference time is correct for the amount of time AAI took*"
+                                embed.description = embed_output
+                                resized = True
+
+                        elif e.status == 404:
+                            message = "```Error 404```\n\n" \
+                                      "Usually occurs if you delete your message while the bot is still running" \
+                                      "a model.\n" \
+                                      "Can generally be ignored. If something else caused this then please contact" \
+                                      "the bot developers."
+                            await generate_user_error_embed(ctx, message)
+
+                        else:
+                            await ctx.send(e.status)
+                            await send_traceback(ctx, e)
+
+        await ctx.message.delete()
 
     @model.error
     async def model_error(self, ctx, error):
@@ -165,6 +194,23 @@ class Model(commands.Cog):
                       "This will run the `alwaysai/enet` model on the image you sent with the message"
             await generate_user_error_embed(ctx, message)
             error_handled = True
+
+        if isinstance(error, discord.errors.HTTPException):
+            if error.status == 404:
+                message = "```Error 404```\n\n" \
+                          "Usually occurs if you delete your message while the bot is still running" \
+                          "a model.\n" \
+                          "Can generally be ignored. If something else caused this then please contact" \
+                          "the bot developers."
+                await generate_user_error_embed(ctx, message)
+
+            if error.status == 403:
+                message = "```Error 403```\n\n" \
+                          "Usually occurs if you delete your message while the bot is still running" \
+                          "a model.\n" \
+                          "Can generally be ignored. If something else caused this then please contact" \
+                          "the bot developers."
+                await generate_user_error_embed(ctx, message)
 
         # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
         error = getattr(error, "original", error)
