@@ -129,9 +129,9 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
-        model_alt_name = get_model_by_alias(model_name)
+        model_name = get_model_by_alias(model_name)
 
-        if model_name is None and model_alt_name is None:  # No specified model so show list of models
+        if model_name is None:  # No specified model so show list of models
             with open("alwaysai.app.json", "r") as json_file:
                 encoded_data = json_file.read()
                 decoded_data = json.loads(encoded_data)
@@ -199,12 +199,9 @@ class Commands(commands.Cog):
 
         else:
             # TODO Add local image thumbnail to make the command more appealing to look at
-            if model_alt_name is None:
-                data = get_model_info(model_name)
-                aliases = get_model_aliases(model_name)
-            else:
-                data = get_model_info(model_alt_name)
-                aliases = get_model_aliases(model_alt_name)
+
+            data = get_model_info(model_name)
+            aliases = get_model_aliases(model_name)
 
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
@@ -220,7 +217,7 @@ class Commands(commands.Cog):
                                                    data["model_parameters_framework_type"],
                                                    data["dataset"],
                                                    data["version"],
-                                                   ", ".join(aliases))
+                                                   ", ".join(aliases[:1]))
 
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
             await ctx.send(embed=embed)
