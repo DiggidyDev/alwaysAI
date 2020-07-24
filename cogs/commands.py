@@ -17,6 +17,43 @@ async def model_help_react(message):
     await message.add_reaction("\U000023e9")  # Right fast
     await message.add_reaction("<:cross:671116183780720670>")  # Cross
 
+def get_model_aliases(model_name):
+
+    aliases = {
+        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
+        ("alwaysai/enet", "enet"): "alwaysai/enet",
+        ("alwaysai/fcn_resnet18_cityscapes_512x256",
+         "fcn_resnet18_cityscapes_512x256", "cityscapes", "city",
+         "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
+        ("alwaysai/human-pose", "human", "human-pose", "human_pose",
+         "pose"): "alwaysai/human-pose",
+        ("alwaysai/res10_300x300_ssd_iter_140000",
+         "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd",
+         "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
+        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4",
+         "mobilenet", "ssd_mobile", "mobile",
+         "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
+    }
+
+    return next(k[1:] for k, v in aliases.items() if model_name in k)
+
+
+def get_model_by_alias(alias):
+    aliases = {
+        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
+        ("alwaysai/enet", "enet"): "alwaysai/enet",
+        ("alwaysai/fcn_resnet18_cityscapes_512x256", "fcn_resnet18_cityscapes_512x256", "cityscapes", "city", "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
+        ("alwaysai/human-pose", "human", "human-pose", "human_pose", "pose"): "alwaysai/human-pose",
+        ("alwaysai/res10_300x300_ssd_iter_140000", "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd", "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
+        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4", "mobilenet", "ssd_mobile", "mobile", "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
+    }
+
+    for a, m in aliases.items():
+        if alias in a:
+            return m
+
+    return None
+
 
 class Commands(commands.Cog):
     # TODO Install more models
@@ -130,6 +167,8 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
+        model_name = get_model_by_alias(model_name)
+
         if model_name is None:  # No specified model so show list of models
             with open("alwaysai.app.json", "r") as jsonfile:
                 encoded_data = jsonfile.read()
@@ -199,19 +238,22 @@ class Commands(commands.Cog):
         else:
             # TODO Add local image thumbnail to make the command more appealing to look at
             data = get_model_info(model_name)
+            aliases = get_model_aliases(model_name)
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
                           "**License:** {}\n\n" \
                           "**Inference Time:** {}\n" \
                           "**Framework:** {}\n" \
                           "**Dataset:** {}\n" \
-                          "**Version:** {}".format(data["description"],
+                          "**Version:** {}\n\n" \
+                          "**Aliases:** {}".format(data["description"],
                                                    data["model_parameters_purpose"],
                                                    data["license"],
                                                    data["inference_time"],
                                                    data["model_parameters_framework_type"],
                                                    data["dataset"],
-                                                   data["version"])
+                                                   data["version"],
+                                                   ", ".join(aliases))
 
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
             await ctx.send(embed=embed)
