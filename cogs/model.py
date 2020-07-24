@@ -115,7 +115,7 @@ class Model(commands.Cog):
         self.bot = bot
 
     # TODO Fix Alpha Channel issue
-    @commands.command()
+    @commands.command(aliases=["m"])
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
         await ctx.message.add_reaction("\U0001f50e")
         attachments = ctx.message.attachments
