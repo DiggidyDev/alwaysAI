@@ -198,8 +198,6 @@ class Commands(commands.Cog):
                     await model_help_react(embed_message)
 
         else:
-            # TODO Add local image thumbnail to make the command more appealing to look at
-
             data = get_model_info(model_name)
             aliases = get_model_aliases(model_name)
 
