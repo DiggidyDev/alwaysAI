@@ -6,8 +6,7 @@ import discord
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
-from cogs import model
-from cogs.model import get_model_info
+from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
 async def model_help_react(message):
@@ -16,43 +15,6 @@ async def model_help_react(message):
     await message.add_reaction("\U000027a1")  # Right
     await message.add_reaction("\U000023e9")  # Right fast
     await message.add_reaction("<:cross:671116183780720670>")  # Cross
-
-def get_model_aliases(model_name):
-
-    aliases = {
-        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
-        ("alwaysai/enet", "enet"): "alwaysai/enet",
-        ("alwaysai/fcn_resnet18_cityscapes_512x256",
-         "fcn_resnet18_cityscapes_512x256", "cityscapes", "city",
-         "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
-        ("alwaysai/human-pose", "human", "human-pose", "human_pose",
-         "pose"): "alwaysai/human-pose",
-        ("alwaysai/res10_300x300_ssd_iter_140000",
-         "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd",
-         "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
-        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4",
-         "mobilenet", "ssd_mobile", "mobile",
-         "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
-    }
-
-    return next(k[1:] for k, v in aliases.items() if model_name in k)
-
-
-def get_model_by_alias(alias):
-    aliases = {
-        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
-        ("alwaysai/enet", "enet"): "alwaysai/enet",
-        ("alwaysai/fcn_resnet18_cityscapes_512x256", "fcn_resnet18_cityscapes_512x256", "cityscapes", "city", "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
-        ("alwaysai/human-pose", "human", "human-pose", "human_pose", "pose"): "alwaysai/human-pose",
-        ("alwaysai/res10_300x300_ssd_iter_140000", "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd", "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
-        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4", "mobilenet", "ssd_mobile", "mobile", "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
-    }
-
-    for a, m in aliases.items():
-        if alias in a:
-            return m
-
-    return None
 
 
 class Commands(commands.Cog):
@@ -167,11 +129,11 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
-        model_name = get_model_by_alias(model_name)
+        model_alt_name = get_model_by_alias(model_name)
 
-        if model_name is None:  # No specified model so show list of models
-            with open("alwaysai.app.json", "r") as jsonfile:
-                encoded_data = jsonfile.read()
+        if model_name is None and model_alt_name is None:  # No specified model so show list of models
+            with open("alwaysai.app.json", "r") as json_file:
+                encoded_data = json_file.read()
                 decoded_data = json.loads(encoded_data)
 
             # Formatting all models into a 2D list - each inner list is an unformatted page
@@ -237,8 +199,13 @@ class Commands(commands.Cog):
 
         else:
             # TODO Add local image thumbnail to make the command more appealing to look at
-            data = get_model_info(model_name)
-            aliases = get_model_aliases(model_name)
+            if model_alt_name is None:
+                data = get_model_info(model_name)
+                aliases = get_model_aliases(model_name)
+            else:
+                data = get_model_info(model_alt_name)
+                aliases = get_model_aliases(model_alt_name)
+
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
                           "**License:** {}\n\n" \
@@ -274,6 +241,7 @@ class Commands(commands.Cog):
 
         if not error_handled:
             await send_traceback(ctx, error)
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))

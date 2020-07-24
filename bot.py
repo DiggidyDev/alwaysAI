@@ -43,7 +43,7 @@ class Bot(commands.Bot):
         await send_traceback(ctx, exception)
 
     def run(self):
-        super().run(open("token.secret", "r").read())
+        super().run(open("data/token.secret", "r").read())
 
     def load_cog(self, cog):
         super().load_extension(cog)
