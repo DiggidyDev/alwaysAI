@@ -217,10 +217,12 @@ class Commands(commands.Cog):
                                                    data["model_parameters_framework_type"],
                                                    data["dataset"],
                                                    data["version"],
-                                                   ", ".join(aliases[:1]))
+                                                   ", ".join(aliases[:-1]))
 
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
-            await ctx.send(embed=embed)
+            thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
+            embed.set_thumbnail(url="attachment://thumbnail.png")
+            await ctx.send(embed=embed, file=thumbnail)
 
     @model_help.error
     async def model_help_error(self, ctx, error):
