@@ -203,6 +203,11 @@ class Commands(commands.Cog):
             data = get_model_info(model_name)
             aliases = get_model_aliases(model_name)
 
+            # Adding spaces between words
+            # SemanticSegmentation -> Semantic Segmentation
+            category_split = re.findall('[A-Z][^A-Z]*', data["model_parameters_purpose"])
+            category = " ".join(category_split)
+
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
                           "**License:** {}\n\n" \
@@ -211,7 +216,7 @@ class Commands(commands.Cog):
                           "**Dataset:** {}\n" \
                           "**Version:** {}\n\n" \
                           "**Aliases:** {}".format(data["description"],
-                                                   data["model_parameters_purpose"],
+                                                   category,
                                                    data["license"],
                                                    data["inference_time"],
                                                    data["model_parameters_framework_type"],
