@@ -90,17 +90,38 @@ class Commands(commands.Cog):
 
         return suggestions
 
-    @commands.command()
-    async def help(self, ctx):
-        """
-        Just a help command that'll be useful some day soon.
-        We should soooo do like *help <cmd> and then show what args each command takes
-        It'd look funky - like how Dpys docs are really nice
-        Sorry I just reaaaally like the docs
-        """
-        await ctx.send("~ W.I.P ~")
+    @commands.command(aliases=["h"])
+    async def help(self, ctx, command=None):
+        with open("data/help.json", "r") as json_file:
+            encoded_data = json_file.read()
+            help_data = json.loads(encoded_data)
 
-    @commands.command(aliases=["search"])
+        title = help_data["default"]["title"]
+
+        # Retrieves command - useful if user wants to use a commands alias
+        command = self.bot.get_command(str(command))
+
+        if command is not None: # Command exists
+            # Grabbing title, footer, description and notes (if that exists)
+            title += help_data[command.name]["title"]
+            footer = "Aliases: {}".format(", ".join(command.aliases))
+            description = "\n".join(help_data[command.name]["description"])
+
+            if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
+                description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
+
+        else:  # If no command exists it uses the default description
+            description = "\n".join(help_data["default"]["description"])
+            footer = ""
+
+        embed = discord.Embed(title="{}**".format(title), description=description, colour=0xA03D5C)
+        embed.set_footer(text=footer)
+
+        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
+        embed.set_thumbnail(url="attachment://thumbnail.png")
+        await ctx.send(embed=embed, file=thumbnail)
+
+    @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
@@ -198,10 +219,13 @@ class Commands(commands.Cog):
                     await model_help_react(embed_message)
 
         else:
-            # TODO Add local image thumbnail to make the command more appealing to look at
-
             data = get_model_info(model_name)
             aliases = get_model_aliases(model_name)
+
+            # Adding spaces between words
+            # SemanticSegmentation -> Semantic Segmentation
+            category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
+            category = " ".join(category_split)
 
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
@@ -211,7 +235,7 @@ class Commands(commands.Cog):
                           "**Dataset:** {}\n" \
                           "**Version:** {}\n\n" \
                           "**Aliases:** {}".format(data["description"],
-                                                   data["model_parameters_purpose"],
+                                                   category,
                                                    data["license"],
                                                    data["inference_time"],
                                                    data["model_parameters_framework_type"],
