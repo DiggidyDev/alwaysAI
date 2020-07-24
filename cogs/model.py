@@ -1,5 +1,6 @@
 import collections
 import json
+from copy import deepcopy
 from io import BytesIO
 
 import cv2
@@ -46,7 +47,7 @@ def get_model_by_alias(alias):
 
 def get_model_aliases(model_name):
     if model_name in model_aliases.keys():
-        aliases = model_aliases[model_name]
+        aliases = deepcopy(model_aliases[model_name])
         aliases.append(model_name)
         return aliases
     return None
