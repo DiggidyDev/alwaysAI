@@ -6,8 +6,7 @@ import discord
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
-from cogs import model
-from cogs.model import get_model_info
+from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
 async def model_help_react(message):
@@ -130,9 +129,11 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
+        model_name = get_model_by_alias(model_name)
+
         if model_name is None:  # No specified model so show list of models
-            with open("alwaysai.app.json", "r") as jsonfile:
-                encoded_data = jsonfile.read()
+            with open("alwaysai.app.json", "r") as json_file:
+                encoded_data = json_file.read()
                 decoded_data = json.loads(encoded_data)
 
             # Formatting all models into a 2D list - each inner list is an unformatted page
@@ -198,20 +199,25 @@ class Commands(commands.Cog):
 
         else:
             # TODO Add local image thumbnail to make the command more appealing to look at
+
             data = get_model_info(model_name)
+            aliases = get_model_aliases(model_name)
+
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
                           "**License:** {}\n\n" \
                           "**Inference Time:** {}\n" \
                           "**Framework:** {}\n" \
                           "**Dataset:** {}\n" \
-                          "**Version:** {}".format(data["description"],
+                          "**Version:** {}\n\n" \
+                          "**Aliases:** {}".format(data["description"],
                                                    data["model_parameters_purpose"],
                                                    data["license"],
                                                    data["inference_time"],
                                                    data["model_parameters_framework_type"],
                                                    data["dataset"],
-                                                   data["version"])
+                                                   data["version"],
+                                                   ", ".join(aliases[:1]))
 
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
             await ctx.send(embed=embed)
@@ -232,6 +238,7 @@ class Commands(commands.Cog):
 
         if not error_handled:
             await send_traceback(ctx, error)
+
 
 def setup(bot):
     bot.add_cog(Commands(bot))

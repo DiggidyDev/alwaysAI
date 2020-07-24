@@ -1,7 +1,7 @@
 import collections
 import json
-import sys
 from io import BytesIO
+
 import cv2
 import discord
 import edgeiq
@@ -28,15 +28,28 @@ def get_model_info(model_name):
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
     :return Dict, contains the data you requested in the same order
     """
-    with open("models/{}/alwaysai.model.json".format(model_name), "r") as jsonfile:
-        encoded_data = jsonfile.read()
-        decoded_data = flatten(json.loads(encoded_data))
+    with open("models/{}/alwaysai.model.json".format(model_name), "r") as json_file:
+        decoded_data = flatten(json.loads(json_file.read()))
 
         for key in decoded_data:
             if decoded_data[key] == "":
                 decoded_data[key] = None
 
         return decoded_data
+
+
+def get_model_by_alias(alias):
+    if alias in model_aliases.keys():
+        return alias
+    return next((model for model, aliases in model_aliases.items() if alias in aliases), None)
+
+
+def get_model_aliases(model_name):
+    if model_name in model_aliases.keys():
+        aliases = model_aliases[model_name]
+        aliases.append(model_name)
+        return aliases
+    return None
 
 
 def detection_base(model, confidence, image_array):
@@ -54,7 +67,7 @@ def detection_base(model, confidence, image_array):
 
     image = edgeiq.markup_image(image_array, predictions)
 
-    return image, results
+    return image, results, None
 
 
 # TODO Make font scale with image size - look into getTextSize() potentially for width of text
@@ -106,6 +119,8 @@ class Model(commands.Cog):
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
         await ctx.message.add_reaction("\U0001f50e")
         attachments = ctx.message.attachments
+        model = get_model_by_alias(model)
+
         category = get_model_info(model)["model_parameters_purpose"]
 
         if len(attachments) == 0:
@@ -125,16 +140,19 @@ class Model(commands.Cog):
 
             embed_output = ""
 
-            if category == "ObjectDetection":
-                image, results = detection_base(model, confidence, img_np)
+            categories = {
+                "Classification": classification_base,
+                "ObjectDetection": detection_base,
+                "PoseEstimation": pose_base,
+                "SemanticSegmentation": semantic_base
+            }
+
+            if category in ["ObjectDetection", "Classification"]:
+                image, results, text = categories[category](model, confidence, img_np)
                 embed_output = "\n**Confidence:** {}".format(confidence)
-            elif category == "Classification":
-                image, results, text = classification_base(model, confidence, img_np)
-                embed_output = "\n**Confidence:** {}\n\n**Label:** {}".format(confidence, text)
-            elif category == "PoseEstimation":
-                image, results = pose_base(model, img_np)
-            elif category == "SemanticSegmentation":
-                image, results = semantic_base(model, img_np)
+                embed_output += "\n\n**Label:** {}".format(text) if text else ""
+            elif category in ["PoseEstimation", "SemanticSegmentation"]:
+                image, results = categories[category](model, img_np)
             else:
                 return  # Make fancy message?
 
@@ -197,9 +215,9 @@ class Model(commands.Cog):
 
         if isinstance(error, discord.errors.Forbidden):
             message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
-                          "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                          "Can generally be ignored. If something else caused this then please contact " \
-                          "the bot developers."
+                      "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                      "Can generally be ignored. If something else caused this then please contact " \
+                      "the bot developers."
             await generate_user_error_embed(ctx, message)
             error_handled = True
 
@@ -218,3 +236,7 @@ class Model(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Model(bot))
+
+
+with open("data/aliases.json", "r") as json_file:
+    model_aliases = json.loads(json_file.read())
