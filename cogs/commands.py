@@ -153,6 +153,20 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @find.error
+    async def find_error(self, ctx, error):
+        error_handled = False
+
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            message = "```MissingQuery - please include a query```\n\n" \
+                      "For example: `*find Detection`\n" \
+                      "This try to find anything in the docs with `Detection` in it's name."
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
+
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):

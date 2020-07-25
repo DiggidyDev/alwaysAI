@@ -7,6 +7,8 @@ import discord
 import psutil
 from discord.ext import commands
 
+from bot import generate_user_error_embed, send_traceback
+
 
 class Owner(commands.Cog):
 
@@ -47,15 +49,22 @@ class Owner(commands.Cog):
         """
         variant = variant.title().strip()
         desc = ""
-
-        if len(cog_list) == 0 and variant != "Reloadall":
-            await ctx.send("`ERROR: MissingRequiredArgument - missing cog arguments.`")
-
+        if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
+            message = "```InvalidVariation - please include a valid cog variation```\n\n" \
+                      "For example: `*cog reload cogs.model`\n" \
+                      "Variations are: load, unload, reload and reloadall"
+            await generate_user_error_embed(ctx, message)
             return
 
-        if variant not in ["Load", "Unload", "Reload"]:
-            if variant == "Reloadall":
-                cog_list = self.bot.cog_list
+        if len(cog_list) == 0 and variant != "Reloadall":
+            message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
+                      "For example: `*cog reload cogs.model`\n" \
+                      "All cogs names will start with `cogs.`. For example cogs.model"
+            await generate_user_error_embed(ctx, message)
+            return
+
+        if variant == "Reloadall":
+            cog_list = self.bot.cog_list
 
         for cog in cog_list:
             try:
@@ -69,6 +78,21 @@ class Owner(commands.Cog):
 
         embed = discord.Embed(title=variant, description=desc, colour=self.colour)
         await ctx.send(embed=embed)
+
+    @cog.error
+    async def cog_error(self, ctx, error):
+        error_handled = False
+
+        # Singular errors
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            message = "```MissingVariation - please include a cog variation```\n\n" \
+                      "For example: `*cog reload cogs.model`\n" \
+                      "Variations are: load, unload, reload and reloadall"
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
 
     @commands.command(aliases=["system", "stats", "ping"])
     async def sys(self, ctx):
