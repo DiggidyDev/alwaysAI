@@ -1,6 +1,7 @@
 # Our Files
 token.secret
 /.idea
+/bin
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
