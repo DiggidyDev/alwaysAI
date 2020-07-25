@@ -1,3 +1,4 @@
+import json
 import platform
 import sys
 import time
@@ -16,8 +17,23 @@ class Owner(commands.Cog):
         self.bot = bot
         self.colour = discord.Color.blurple()
 
+        with open("data/admins.json", "r") as json_file:
+            self.admins = json.loads(json_file.read())["ids"]
+
     async def cog_check(self, ctx):
-        return await self.bot.is_owner(ctx.author)
+        return await self.bot.is_owner(ctx.author) or ctx.author.id in self.admins
+
+    async def cog_command_error(self, ctx, error):
+        error_handled = False
+
+        if isinstance(error, discord.ext.commands.errors.CheckFailure):
+            message = "```NoPermissions - You don't have the correct permissions to do this```\n\n" \
+                      "If you believe you should then let the bot developer know."
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
 
     @commands.command(aliases=["e"], hidden=True)
     async def eval(self, ctx, *, code):
