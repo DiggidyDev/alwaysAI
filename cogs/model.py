@@ -116,7 +116,7 @@ class Model(commands.Cog):
 
     # TODO Fix Alpha Channel issue
     @commands.command(aliases=["m"])
-    async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
+    async def model(self, ctx, model, confidence=None):  # Only functions for Object Detection FOR NOW
         await ctx.message.add_reaction("\U0001f50e")
         attachments = ctx.message.attachments
 
@@ -151,6 +151,11 @@ class Model(commands.Cog):
             }
 
             if category in ["ObjectDetection", "Classification"]:
+                try:
+                    confidence = float(confidence)
+                except (ValueError, TypeError):
+                    confidence = 0.5
+
                 image, results, text = categories[category](model, confidence, img_np)
                 embed_output = "\n**Confidence:** {}".format(confidence)
                 embed_output += "\n\n**Label:** {}".format(text) if text else ""
