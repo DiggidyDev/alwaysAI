@@ -17,8 +17,10 @@ Add the downloaded `wkhtmltoimage.exe` to `/wkhtmltopdf`.
 ## Data Folder Info
 ### Don't modify
 **png** - images used for embeds
+
 **help.json** - data used by the help embed
 
 ### Can modify
 **aliases.json** - model aliases. Feel free to add to this file any new models or new custom aliases.
+
 **admins.json** - Discord IDs for people you want to be able to use: `*sys`, `*cog` and `*eval`.
