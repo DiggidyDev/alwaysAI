@@ -213,8 +213,10 @@ class Commands(commands.Cog):
 
             # Wait for a users reaction
             while True:
-                user_reactions = await self.bot.wait_for("reaction_add", check=check)
-                emoji = str(user_reactions[0])
+                reaction, user = await self.bot.wait_for("reaction_add", check=check)
+                await embed_message.remove_reaction(str(reaction.emoji), user)
+
+                emoji = str(reaction)
 
                 page_changed = True
 
@@ -236,10 +238,8 @@ class Commands(commands.Cog):
                 if page_changed:  # Only need to edit the message if the page needs to be changed
                     embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
                     embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
-                    # TODO Fix up how reaction removal works to be more efficient
-                    await embed_message.clear_reactions()
+
                     await embed_message.edit(embed=embed)
-                    await model_help_react(embed_message)
 
         else:
             data = get_model_info(model_name)
