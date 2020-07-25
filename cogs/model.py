@@ -15,6 +15,12 @@ from bot import generate_user_error_embed, send_traceback
 
 
 def flatten(d, parent_key="", sep="_"):
+    """
+    :param d: Dictionary
+    :param parent_key: Not sure - StackOverflow
+    :param sep: Separator for nested dicts
+    :return: Flattened Dictionary
+    """
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -28,7 +34,7 @@ def flatten(d, parent_key="", sep="_"):
 def get_model_info(model_name):
     """
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
-    :return Dict, contains the data you requested in the same order
+    :return: Dict, contains the data you requested in the same order
     """
     with open("models/{}/alwaysai.model.json".format(model_name), "r") as json_file:
         decoded_data = flatten(json.loads(json_file.read()))
@@ -41,12 +47,20 @@ def get_model_info(model_name):
 
 
 def get_model_by_alias(alias):
+    """
+    :param alias: String, model name alias
+    :return: String model name or None if one isn't found
+    """
     if alias in model_aliases.keys():
         return alias
     return next((model for model, aliases in model_aliases.items() if alias in aliases), None)
 
 
 def get_model_aliases(model_name):
+    """
+    :param model_name: String, model name
+    :return: List of aliases + model name or None if model has no aliases
+    """
     if model_name in model_aliases.keys():
         aliases = deepcopy(model_aliases[model_name])
         aliases.append(model_name)
@@ -109,8 +123,7 @@ def semantic_base(model, image_array):
     imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
     legend_image = Image.open("legend.png")
     width, height = legend_image.size
-    legend_image.crop((0, 0, 0.61*width, height)).save("legend.png")
-
+    legend_image.crop((0, 0, 0.61 * width, height)).save("legend.png")
 
     # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
