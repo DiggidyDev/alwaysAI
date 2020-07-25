@@ -3,9 +3,18 @@ The unofficial official alwaysAI discord bot repo!
 
 ## Dependencies
 * discord.py
+* Pillow
 * psutil
 * sphinx
-* Pillow
+* imgkit
+* [wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)
+
+## Adding .exe to PATH
+
 
 ## Setup
 Add a `token.secret` file to the repo and put within it the bots token.
+
+Run the following in your command prompt:  
+`set PATH=%PATH%;C:\path\to\wkhtmltopdf\bin`  
+This is used for converting a HTML string to an image (legend for semantic segmentation).
