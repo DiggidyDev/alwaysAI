@@ -10,5 +10,5 @@ The unofficial official alwaysAI discord bot repo!
 * [wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)
 
 ## Adding .exe to PATH
-This is necessary to process the HTML string into an image for semantic segmentation.  
+This is necessary to process the HTML string into an image for the semantic segmentation's legend.  
 In your command prompt, run the following: `set PATH=%PATH%;C:\path\to\wkhtmltopdf\bin`
