@@ -112,9 +112,7 @@ def semantic_base(model, image_array):
 
     # Build legend into image and save it to a file
     legend_html = semantic_segmentation.build_legend()
-    pathtoexe = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
-    config = imgkit.config(wkhtmltoimage=pathtoexe)
-    imgkit.from_string(legend_html, "legend.png", config=config)
+    imgkit.from_string(legend_html, "legend.png")
 
     # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
