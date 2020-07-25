@@ -9,6 +9,7 @@ import edgeiq
 import numpy as np
 from PIL import Image
 from discord.ext import commands
+import imgkit
 
 from bot import generate_user_error_embed, send_traceback
 
@@ -101,10 +102,16 @@ def semantic_base(model, image_array):
     semantic_segmentation = edgeiq.SemanticSegmentation(model)
     semantic_segmentation.load(engine=edgeiq.Engine.DNN)
 
+    # Build legend into image and save it to a file
+    legend_html = semantic_segmentation.build_legend()
+    pathtoexe = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
+    config = imgkit.config(wkhtmltoimage=pathtoexe)
+    imgkit.from_string(legend_html, "legend.png", config=config)
+
+    # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
     mask = semantic_segmentation.build_image_mask(results.class_map)
     image = edgeiq.blend_images(image_array, mask, 0.5)
-    # print(semantic_segmentation.build_legend())
 
     return image, results
 
@@ -116,39 +123,40 @@ class Model(commands.Cog):
 
     # TODO Fix Alpha Channel issue
     @commands.command(aliases=["m"])
-    async def model(self, ctx, model, confidence=None):  # Only functions for Object Detection FOR NOW
-        await ctx.message.add_reaction("\U0001f50e")
-        attachments = ctx.message.attachments
+    async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
+        async with ctx.typing():
+            await ctx.message.add_reaction("\U0001f50e")
+            attachments = ctx.message.attachments
 
-        # Allowing models without aliases to work
-        model_from_alias = get_model_by_alias(model)
-        model = model if model_from_alias is None else model_from_alias
+            # Allowing models without aliases to work
+            model_from_alias = get_model_by_alias(model)
+            model = model if model_from_alias is None else model_from_alias
 
-        category = get_model_info(model)["model_parameters_purpose"]
+            category = get_model_info(model)["model_parameters_purpose"]
 
-        if len(attachments) == 0:
-            message = "```NoAttachment - please upload an image when running the model command```\n\n" \
-                      "In order to upload an image with a message you can:\n" \
-                      "1. Paste an image from your clipboard\n" \
-                      "2. Click the + button to the left of where you type your message"
-            await generate_user_error_embed(ctx, message)
-            return
+            if len(attachments) == 0:
+                message = "```NoAttachment - please upload an image when running the model command```\n\n" \
+                          "In order to upload an image with a message you can:\n" \
+                          "1. Paste an image from your clipboard\n" \
+                          "2. Click the + button to the left of where you type your message"
+                await generate_user_error_embed(ctx, message)
+                return
 
-        for img in attachments:  # Iterating through each image in the message - only works for mobile
+            for img in attachments:  # Iterating through each image in the message - only works for mobile
 
-            # Getting image and converting it to appropriate data type
-            img_bytes = await img.read()
-            np_arr = np.fromstring(img_bytes, np.uint8)
-            img_np = cv2.imdecode(np_arr, 1)
+                # Getting image and converting it to appropriate data type
+                img_bytes = await img.read()
+                np_arr = np.fromstring(img_bytes, np.uint8)
+                img_np = cv2.imdecode(np_arr, 1)
 
-            embed_output = ""
+                embed_output = ""
 
-            categories = {
-                "Classification": classification_base,
-                "ObjectDetection": detection_base,
-                "PoseEstimation": pose_base,
-                "SemanticSegmentation": semantic_base
-            }
+                categories = {
+                    "Classification": classification_base,
+                    "ObjectDetection": detection_base,
+                    "PoseEstimation": pose_base,
+                    "SemanticSegmentation": semantic_base
+                }
 
             if category in ["ObjectDetection", "Classification"]:
                 try:
@@ -164,7 +172,7 @@ class Model(commands.Cog):
             else:
                 return  # Make fancy message?
 
-            embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
+                embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
             embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
@@ -185,7 +193,15 @@ class Model(commands.Cog):
                         embed.set_image(url="attachment://results.png")
 
                         await ctx.send(embed=embed, file=disc_image)
+
+                        if category == "SemanticSegmentation":
+                            legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
+                            image_legend = discord.File("legend.png")
+                            legend_embed.set_image(url="attachment://legend.png")
+                            await ctx.send(embed=legend_embed, file=image_legend)
+
                         break
+
                     except discord.errors.HTTPException as e:  # Resize until no 413 error
                         if e.status == 413:
                             im = im.resize((round(im.width * 0.7), round(im.height * 0.7)))
