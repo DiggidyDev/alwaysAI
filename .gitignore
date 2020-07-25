@@ -1,7 +1,9 @@
 # Our Files
 token.secret
+wkhtmltox-0.12.6-1.msvc2015-win64.exe
 /.idea
-/bin
+/wkhtmltopdf
+data/legend.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

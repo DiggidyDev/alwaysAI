@@ -1,0 +1,109 @@
+{
+	"default": {
+		"title": "**Help ",
+		"description": [
+			"You can use `*help <command>` to view more information on a specific command",
+			"For example: `*help model`\n",
+			"**User Commands:**",
+			"`*model <model name> <confidence: optional>`",
+			"`*modelhelp <model name: optional>`",
+			"`*find <term>`\n",
+			"**Admin Commands:**",
+			"`*cog <variation> <cog name: optional>`",
+			"`*eval <Python code>`",
+			"`*sys`"
+		]
+	},
+	"help": {
+		"title": "~ Help Command",
+		"description": [
+			"*This command doesn't really need an explanation does it.*\n",
+			"`*help <command: optional>`\n",
+			"`<command>` ~ an optional command name if you want to view information about a specific command. If a command isn't given or the command is invalid then the command list is shown.\n",
+			"Example: `*help h`"
+		],
+		"formatted": [
+			"\n\n**Notes**",
+			"If you got this far then you probably didn't need to know most of this. I'm just doing this for consistency."
+		]
+	},
+	"model": {
+		"title": "~ Model Command",
+		"description": [
+			"*The model command lets you test out models on an image.*\n",
+			"`*model <model name> <confidence: optional>`\n",
+			"`<confidence: optional>` ~ an optional float that is used for Object Classification or Object Detection models. If a model uses a confidence value and one isn't given, it will be defaulted to 0.5\n",
+			"`<model name>` ~ can be either the actual model name or an alias. For info on model aliases use `*help model_help`\n",
+			"Example: `*model alwaysai/agenet 0.4`\n"
+		],
+		"formatted": [
+			"\n\n**Notes**",
+			"This is limited to models installed on the bot.\n> ",
+			"In order for this to work you need to upload an image with the command.\n> ",
+			"To upload an image you can do either of the following:",
+			"1. Paste an image from the clipboard",
+			"2. Click the + button to the left of where you type out your message\n> ",
+			"The bot supports running a model on multiple images if you run it via mobile - won't work on other platforms due to limitations within Discord."
+		]
+	},
+	"model_help": {
+		"title": "~ Model Help Command",
+		"description": [
+			"*Allows you to view all models and specifics on them.*\n",
+			"`*model_help <model name: optional>`\n",
+			"`<model name>` ~ an optional model name if you want to view information about a specific model. If a model name isn't given or the model name is invalid then the model list is shown. The model name can be either the actual model name or an alias.\n",
+			"Example: `*model_help alwaysai/agenet`"
+		],
+		"formatted": [
+			"\n\n**Notes**",
+			"Most models have a Github link. This will be available in the model name if it shows as blue.\n> ",
+			"Only the person who called model_help can use the reaction based menu interaction."
+		]
+	},
+	"find": {
+		"title": "~ Find Command",
+		"description": [
+			"*Lets you search the documentation and visit a result on the documentation website.*\n",
+			"`*find <query>`\n",
+			"`<query>` ~ the term you want to search for. Isn't case sensitive but is sensitive to exact words.\n",
+			"Example: `*find Detection`"
+		]
+	},
+	"cog": {
+		"title": "~ Cog Admin Command",
+		"description": [
+			"*Lets you manipulate the bots cogs.*\n",
+			"`*cog <variation> <*cog names: optional>`\n",
+			"`<variation>` ~ the type of manipulation: unload, load, reload or reloadall.\n",
+			"`<*cog names: optional>` ~ all cogs you want to be affected (not needed for reloadall).\n",
+			"Example: `*cog load cogs.model cogs.commands`"
+		],
+		"formatted": [
+			"\n\n**Notes**",
+			"All cogs names will start with `cogs.`.",
+			"For example `cogs.model`\n> ",
+			"Reloading all cogs may help if the bot has any issues - if it doesn't then let the bot developers know\n> ",
+			"If you don't know how this command works properly I would recommend that you only use `*cog reloadall`"
+		]
+	},
+	"eval": {
+		"title": "~ Eval Admin Command",
+		"description": [
+			"*Lets you run Python code from within Discord.*\n",
+			"`*eval <Python code>`\n",
+			"`<Python code>` ~ the Python code you want to run.\n",
+			"Example: `*eval print('test')`"
+		]
+	},
+	"sys": {
+		"title": "~ Sys Admin Command",
+		"description": [
+			"*Shows you a wide range of stats about the bot including info about CPU, Memory and Ping.*\n",
+			"Usage: `*sys`"
+		],
+		"formatted": [
+			"\n\n**Notes**",
+			"The stats shown as based on the computer that is hosting the bot"
+		]
+	}
+}

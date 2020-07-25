@@ -9,6 +9,7 @@ The unofficial official alwaysAI discord bot repo!
 * imgkit
 * [wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)
 
-## Adding .exe to PATH
-This is necessary to process the HTML string into an image for the semantic segmentation's legend.  
-In your command prompt, run the following: `set PATH=%PATH%;C:\path\to\wkhtmltopdf\bin`
+## Setup
+Add in the data folder a `token.secret` file put within it the bots token.
+
+Add the downloaded `wkhtmltoimage.exe` to `/wkhtmltopdf`.

@@ -5,7 +5,8 @@ from subprocess import Popen, PIPE
 import discord
 from discord.ext import commands
 
-from cogs.model import get_model_info
+from bot import generate_user_error_embed, send_traceback
+from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
 async def model_help_react(message):
@@ -15,46 +16,8 @@ async def model_help_react(message):
     await message.add_reaction("\U000023e9")  # Right fast
     await message.add_reaction("<:cross:671116183780720670>")  # Cross
 
-def get_model_aliases(model_name):
-
-    aliases = {
-        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
-        ("alwaysai/enet", "enet"): "alwaysai/enet",
-        ("alwaysai/fcn_resnet18_cityscapes_512x256",
-         "fcn_resnet18_cityscapes_512x256", "cityscapes", "city",
-         "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
-        ("alwaysai/human-pose", "human", "human-pose", "human_pose",
-         "pose"): "alwaysai/human-pose",
-        ("alwaysai/res10_300x300_ssd_iter_140000",
-         "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd",
-         "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
-        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4",
-         "mobilenet", "ssd_mobile", "mobile",
-         "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
-    }
-
-    return next(k[1:] for k, v in aliases.items() if model_name in k)
-
-
-def get_model_by_alias(alias):
-    aliases = {
-        ("alwaysai/agenet", "agenet", "age"): "alwaysai/agenet",
-        ("alwaysai/enet", "enet"): "alwaysai/enet",
-        ("alwaysai/fcn_resnet18_cityscapes_512x256", "fcn_resnet18_cityscapes_512x256", "cityscapes", "city", "cities"): "alwaysai/fcn_resnet18_cityscapes_512x256",
-        ("alwaysai/human-pose", "human", "human-pose", "human_pose", "pose"): "alwaysai/human-pose",
-        ("alwaysai/res10_300x300_ssd_iter_140000", "res10_300x300_ssd_iter_140000", "res10", "iter", "iter_ssd", "ssd_iter"): "alwaysai/res10_300x300_ssd_iter_140000",
-        ("alwaysai/ssd_mobilenet_v2_oidv4", "ssd_mobilenet_v2_oidv4", "mobilenet", "ssd_mobile", "mobile", "mobilenet_ssd"): "alwaysai/ssd_mobilenet_v2_oidv4"
-    }
-
-    for a, m in aliases.items():
-        if alias in a:
-            return m
-
-    return None
-
 
 class Commands(commands.Cog):
-    # TODO Add in model list command
     # TODO Install more models
     # TODO Model install command - owner only
 
@@ -91,7 +54,8 @@ class Commands(commands.Cog):
                     sectors = sectors[:sectors.index("std:doc")]  # Chop out extraneous data from the end
                     # TODO: ADD LABELS(?)
 
-                sections.append(" ".join([s for s in sectors[1:]]))  # Replacing all of the whitespace with a single space
+                # Replacing all of the whitespace with a single space
+                sections.append(" ".join([s for s in sectors[1:]]))
 
                 links = [i for i in sectors if "/" in i]  # Grab each object's link
                 objects = [i for i in sectors if "/" not in i and "." in i]  # Grab each object
@@ -127,22 +91,50 @@ class Commands(commands.Cog):
 
         return suggestions
 
-    @commands.command()
-    async def help(self, ctx):
-        """
-        Just a help command that'll be useful some day soon.
-        We should soooo do like *help <cmd> and then show what args each command takes
-        It'd look funky - like how Dpys docs are really nice
-        Sorry I just reaaaally like the docs
-        """
-        await ctx.send("~ W.I.P ~")
+    @commands.command(aliases=["h"])
+    async def help(self, ctx, command=None):
+        with open("data/help.json", "r") as json_file:
+            encoded_data = json_file.read()
+            help_data = json.loads(encoded_data)
 
-    @commands.command(aliases=["search"])
+        title = help_data["default"]["title"]
+        colour = 0xB91C36
+        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
+
+        # Retrieves command - useful if user wants to use a commands alias
+        command = self.bot.get_command(str(command))
+
+        if command is not None and command.name in help_data.keys():  # Command exists
+            # Grabbing title, footer, description and notes (if that exists)
+            title += help_data[command.name]["title"]
+            footer = "Aliases: {}".format(", ".join(command.aliases))
+            description = "\n".join(help_data[command.name]["description"])
+
+            if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
+                description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
+
+            # Different colour for owner commands to help distinguish easier
+            if command.cog.qualified_name == "Owner":
+                colour = 0xB32DBF
+                thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
+
+        else:  # If no command exists it uses the default description
+            description = "\n".join(help_data["default"]["description"])
+            footer = ""
+
+        embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
+        embed.set_footer(text=footer)
+
+        embed.set_thumbnail(url="attachment://thumbnail.png")
+        await ctx.send(embed=embed, file=thumbnail)
+
+    @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-        links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function", "method", "module", "class"]]  # Get each object's link from the lookup dictionary
-        # created earlier
+        # Get each object's link from the lookup dictionary created earlier
+        links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
+                                                                      "method", "module", "class"]]
 
         # Removes the preceding edgeiq. from each object
         results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
@@ -164,16 +156,28 @@ class Commands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # TODO Error for no model name
-    # TODO Error for invalid model name
+    @find.error
+    async def find_error(self, ctx, error):
+        error_handled = False
+
+        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
+            message = "```MissingQuery - please include a query```\n\n" \
+                      "For example: `*find Detection`\n" \
+                      "This try to find anything in the docs with `Detection` in it's name."
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
+
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
         model_name = get_model_by_alias(model_name)
 
         if model_name is None:  # No specified model so show list of models
-            with open("alwaysai.app.json", "r") as jsonfile:
-                encoded_data = jsonfile.read()
+            with open("alwaysai.app.json", "r") as json_file:
+                encoded_data = json_file.read()
                 decoded_data = json.loads(encoded_data)
 
             # Formatting all models into a 2D list - each inner list is an unformatted page
@@ -186,7 +190,10 @@ class Commands(commands.Cog):
             current_page_num = 0
 
             if len(pages) == 0:
-                await ctx.send("`ERROR: MissingModels - no models have been installed for this bot.`")
+                message = "```MissingModels - no models have been installed for this bot.```\n\n" \
+                          "Unless you own the bot there's not much you can do.\n" \
+                          "Try to contact the owner of the bot if you ever see this bug."
+                await generate_user_error_embed(ctx, message)
                 return
 
             title = "**Model List**"
@@ -235,9 +242,14 @@ class Commands(commands.Cog):
                     await model_help_react(embed_message)
 
         else:
-            # TODO Add local image thumbnail to make the command more appealing to look at
             data = get_model_info(model_name)
             aliases = get_model_aliases(model_name)
+
+            # Adding spaces between words
+            # SemanticSegmentation -> Semantic Segmentation
+            category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
+            category = " ".join(category_split)
+
             description = "**Description:** {}\n" \
                           "**Category:** {}\n" \
                           "**License:** {}\n\n" \
@@ -246,16 +258,35 @@ class Commands(commands.Cog):
                           "**Dataset:** {}\n" \
                           "**Version:** {}\n\n" \
                           "**Aliases:** {}".format(data["description"],
-                                                   data["model_parameters_purpose"],
+                                                   category,
                                                    data["license"],
                                                    data["inference_time"],
                                                    data["model_parameters_framework_type"],
                                                    data["dataset"],
                                                    data["version"],
-                                                   ", ".join(aliases))
+                                                   ", ".join(aliases[:-1]))
 
             embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
-            await ctx.send(embed=embed)
+            thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
+            embed.set_thumbnail(url="attachment://thumbnail.png")
+            await ctx.send(embed=embed, file=thumbnail)
+
+    @model_help.error
+    async def model_help_error(self, ctx, error):
+        error_handled = False
+
+        # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
+        error = getattr(error, "original", error)
+
+        if isinstance(error, FileNotFoundError):
+            message = "```InvalidModelName - please specify a valid model name```\n\n" \
+                      "For example: `*mhelp alwaysai/enet`\n" \
+                      "You can find all available models by running `*mhelp`"
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
+        if not error_handled:
+            await send_traceback(ctx, error)
 
 
 def setup(bot):

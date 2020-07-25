@@ -1,0 +1,32 @@
+{
+  "alwaysai/agenet": [
+    "agenet",
+    "age"
+  ],
+  "alwaysai/enet": [
+    "enet"
+  ],
+  "alwaysai/fcn_resnet18_cityscapes_512x256": [
+    "fcn_resnet18_cityscapes_512x256",
+	"cityscapes",
+	"cityscape",
+	"city",
+	"cities"
+  ],
+  "alwaysai/human-pose": [
+    "human_pose",
+	"human",
+	"pose"
+  ],
+  "alwaysai/res10_300x300_ssd_iter_140000": [
+	"res10_300x300_ssd_iter_140000",
+	"res10"
+  ],
+  "alwaysai/ssd_mobilenet_v2_oidv4": [
+	"ssd_mobilenet_v2_oidv4",
+	"mobilenet",
+	"ssd_mobile",
+	"mobile",
+	"mobilenet_ssd"
+  ]
+}
