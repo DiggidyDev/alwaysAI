@@ -184,20 +184,19 @@ class Model(commands.Cog):
                         output_buffer.seek(0)
                         # print(sys.getsizeof(output_buffer))
 
-
                         disc_image = discord.File(fp=output_buffer, filename="results.png")
                         embed.set_image(url="attachment://results.png")
 
                         await ctx.send(embed=embed, file=disc_image)
-                        
+
                         if category == "SemanticSegmentation":
                             legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
                             image_legend = discord.File("legend.png")
                             legend_embed.set_image(url="attachment://legend.png")
                             await ctx.send(embed=legend_embed, file=image_legend)
-                            
+
                         break
-                        
+
                     except discord.errors.HTTPException as e:  # Resize until no 413 error
                         if e.status == 413:
                             im = im.resize((round(im.width * 0.7), round(im.height * 0.7)))
@@ -254,7 +253,6 @@ class Model(commands.Cog):
             await send_traceback(ctx, error)
 
 
-               
 def setup(bot):
     bot.add_cog(Model(bot))
 

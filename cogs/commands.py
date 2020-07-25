@@ -54,7 +54,8 @@ class Commands(commands.Cog):
                     sectors = sectors[:sectors.index("std:doc")]  # Chop out extraneous data from the end
                     # TODO: ADD LABELS(?)
 
-                sections.append(" ".join([s for s in sectors[1:]]))  # Replacing all of the whitespace with a single space
+                # Replacing all of the whitespace with a single space
+                sections.append(" ".join([s for s in sectors[1:]]))
 
                 links = [i for i in sectors if "/" in i]  # Grab each object's link
                 objects = [i for i in sectors if "/" not in i and "." in i]  # Grab each object
@@ -131,8 +132,9 @@ class Commands(commands.Cog):
     async def find(self, ctx, *, query):
         suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-        links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function", "method", "module", "class"]]  # Get each object's link from the lookup dictionary
-        # created earlier
+        # Get each object's link from the lookup dictionary created earlier
+        links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
+                                                                      "method", "module", "class"]]
 
         # Removes the preceding edgeiq. from each object
         results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
