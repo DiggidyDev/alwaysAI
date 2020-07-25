@@ -102,11 +102,15 @@ def semantic_base(model, image_array):
     semantic_segmentation = edgeiq.SemanticSegmentation(model)
     semantic_segmentation.load(engine=edgeiq.Engine.DNN)
 
-    # Build legend into image and save it to a file
+    # Build legend into image, save it to a file and crop the whitespace
     legend_html = semantic_segmentation.build_legend()
     config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
     options = {"quiet": ""}
     imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
+    legend_image = Image.open("legend.png")
+    width, height = legend_image.size
+    legend_image.crop((0, 0, 0.61*width, height)).save("legend.png")
+
 
     # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
