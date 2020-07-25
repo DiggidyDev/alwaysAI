@@ -104,9 +104,7 @@ def semantic_base(model, image_array):
 
     # Build legend into image and save it to a file
     legend_html = semantic_segmentation.build_legend()
-    pathtoexe = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
-    config = imgkit.config(wkhtmltoimage=pathtoexe)
-    imgkit.from_string(legend_html, "legend.png", config=config)
+    imgkit.from_string(legend_html, "legend.png")
 
     # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
@@ -159,6 +157,11 @@ class Model(commands.Cog):
                 }
 
                 if category in ["ObjectDetection", "Classification"]:
+                    try:
+                        confidence = float(confidence)
+                    except (ValueError, TypeError):
+                        confidence = 0.5
+
                     image, results, text = categories[category](model, confidence, img_np)
                     embed_output = "\n**Confidence:** {}".format(confidence)
                     embed_output += "\n\n**Label:** {}".format(text) if text else ""
@@ -169,44 +172,44 @@ class Model(commands.Cog):
 
                 embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
-            embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
+                embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
+                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+                embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
 
-            resized = False
+                resized = False
 
-            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
-                while True:
-                    try:
-                        # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
-                        output_buffer = BytesIO()
-                        im.save(output_buffer, "png")
-                        output_buffer.seek(0)
-                        # print(sys.getsizeof(output_buffer))
+                with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
+                    while True:
+                        try:
+                            # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
+                            output_buffer = BytesIO()
+                            im.save(output_buffer, "png")
+                            output_buffer.seek(0)
+                            # print(sys.getsizeof(output_buffer))
 
-                        disc_image = discord.File(fp=output_buffer, filename="results.png")
-                        embed.set_image(url="attachment://results.png")
+                            disc_image = discord.File(fp=output_buffer, filename="results.png")
+                            embed.set_image(url="attachment://results.png")
 
-                        await ctx.send(embed=embed, file=disc_image)
+                            await ctx.send(embed=embed, file=disc_image)
 
-                        if category == "SemanticSegmentation":
-                            legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
-                            image_legend = discord.File("legend.png")
-                            legend_embed.set_image(url="attachment://legend.png")
-                            await ctx.send(embed=legend_embed, file=image_legend)
+                            if category == "SemanticSegmentation":
+                                legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
+                                image_legend = discord.File("legend.png")
+                                legend_embed.set_image(url="attachment://legend.png")
+                                await ctx.send(embed=legend_embed, file=image_legend)
 
-                        break
+                            break
 
-                    except discord.errors.HTTPException as e:  # Resize until no 413 error
-                        if e.status == 413:
-                            im = im.resize((round(im.width * 0.7), round(im.height * 0.7)))
-                            if not resized:
-                                embed_output += "\n\n*Some time was spent resizing this image for Discord\n" \
-                                                "Inference time is correct for the amount of time AAI took*"
-                                embed.description = embed_output
-                                resized = True
-                        else:
-                            raise e
+                        except discord.errors.HTTPException as e:  # Resize until no 413 error
+                            if e.status == 413:
+                                im = im.resize((round(im.width * 0.7), round(im.height * 0.7)))
+                                if not resized:
+                                    embed_output += "\n\n*Some time was spent resizing this image for Discord\n" \
+                                                    "Inference time is correct for the amount of time AAI took*"
+                                    embed.description = embed_output
+                                    resized = True
+                            else:
+                                raise e
 
         await ctx.message.delete()
 
