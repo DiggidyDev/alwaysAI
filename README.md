@@ -9,9 +9,6 @@ The unofficial official alwaysAI discord bot repo!
 * imgkit
 * [wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)
 
-## Adding .exe to PATH
-
-
 ## Setup
 Add a `token.secret` file to the repo and put within it the bots token.
 
