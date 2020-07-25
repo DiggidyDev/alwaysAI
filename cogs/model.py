@@ -1,12 +1,14 @@
 import collections
 import json
 from io import BytesIO
+
 import cv2
 import discord
 import edgeiq
 import numpy as np
 from PIL import Image
 from discord.ext import commands
+import imgkit
 
 
 def flatten(d, parent_key="", sep="_"):
@@ -108,10 +110,16 @@ def semantic_base(model, image_array):
     semantic_segmentation = edgeiq.SemanticSegmentation(model)
     semantic_segmentation.load(engine=edgeiq.Engine.DNN)
 
+    # Build legend into image and save it to a file
+    legend_html = semantic_segmentation.build_legend()
+    pathtoexe = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltoimage.exe"
+    config = imgkit.config(wkhtmltoimage=pathtoexe)
+    imgkit.from_string(legend_html, "legend.png", config=config)
+
+    # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
     mask = semantic_segmentation.build_image_mask(results.class_map)
     image = edgeiq.blend_images(image_array, mask, 0.5)
-    print(semantic_segmentation.build_legend())
 
     return image, results
 
@@ -141,56 +149,64 @@ class Model(commands.Cog):
     # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
-        attachments = ctx.message.attachments
-        model = get_model_by_alias(model)
-        category = get_model_info(model)["model_parameters_purpose"]
+        async with ctx.typing():
+            attachments = ctx.message.attachments
+            model = get_model_by_alias(model)
+            category = get_model_info(model)["model_parameters_purpose"]
 
-        if len(attachments) == 0:
-            await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
-            return
+            if len(attachments) == 0:
+                await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
+                return
 
-        for img in attachments:  # Iterating through each image in the message - only works for mobile
+            for img in attachments:  # Iterating through each image in the message - only works for mobile
 
-            # Getting image and converting it to appropriate data type
-            img_bytes = await img.read()
-            np_arr = np.fromstring(img_bytes, np.uint8)
-            img_np = cv2.imdecode(np_arr, 1)
+                # Getting image and converting it to appropriate data type
+                img_bytes = await img.read()
+                np_arr = np.fromstring(img_bytes, np.uint8)
+                img_np = cv2.imdecode(np_arr, 1)
 
-            embed_output = ""
+                embed_output = ""
 
-            categories = {
-                "Classification": classification_base,
-                "ObjectDetection": detection_base,
-                "PoseEstimation": pose_base,
-                "SemanticSegmentation": semantic_base
-            }
+                categories = {
+                    "Classification": classification_base,
+                    "ObjectDetection": detection_base,
+                    "PoseEstimation": pose_base,
+                    "SemanticSegmentation": semantic_base
+                }
 
-            if category in ["ObjectDetection", "Classification"]:
-                image, results, text = categories[category](model, confidence, img_np)
-                embed_output = "\n**Confidence:** {}".format(confidence)
-                embed_output += "\n\n**Label:** {}".format(text) if text else ""
-            elif category in ["PoseEstimation", "SemanticSegmentation"]:
-                image, results = categories[category](model, img_np)
-            else:
-                return  # Make fancy message?
+                if category in ["ObjectDetection", "Classification"]:
+                    image, results, text = categories[category](model, confidence, img_np)
+                    embed_output = "\n**Confidence:** {}".format(confidence)
+                    embed_output += "\n\n**Label:** {}".format(text) if text else ""
+                elif category in ["PoseEstimation", "SemanticSegmentation"]:
+                    image, results = categories[category](model, img_np)
+                else:
+                    return  # Make fancy message?
 
-            embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
+                embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
-            # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
-            with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
-                output_buffer = BytesIO()
-                im.save(output_buffer, "png")
-                output_buffer.seek(0)
+                # Converting resulting magic for Discord - AAI uses BGR format, Discord uses RGB format
+                with Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)) as im:
+                    output_buffer = BytesIO()
+                    im.save(output_buffer, "png")
+                    output_buffer.seek(0)
 
-            disc_image = discord.File(fp=output_buffer, filename="results.png")
+                image_disc = discord.File(fp=output_buffer, filename="results.png")
 
-            embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_image(url="attachment://results.png")
-            embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
+                embed = discord.Embed(title="", description=embed_output, colour=0xC63D3D)
+                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+                embed.set_image(url="attachment://results.png")
+                embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
 
             await ctx.message.delete()
-            await ctx.send(embed=embed, file=disc_image)
+            await ctx.send(embed=embed, file=image_disc)
+            if category == "SemanticSegmentation":
+
+                legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
+                image_legend = discord.File("legend.png")
+                legend_embed.set_image(url="attachment://legend.png")
+
+                await ctx.send(embed=legend_embed, file=image_legend)
 
 
 def setup(bot):
