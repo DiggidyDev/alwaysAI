@@ -119,7 +119,10 @@ class Model(commands.Cog):
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
         await ctx.message.add_reaction("\U0001f50e")
         attachments = ctx.message.attachments
-        model = get_model_by_alias(model)
+
+        # Allowing models without aliases to work
+        model_from_alias = get_model_by_alias(model)
+        model = model if model_from_alias is None else model_from_alias
 
         category = get_model_info(model)["model_parameters_purpose"]
 

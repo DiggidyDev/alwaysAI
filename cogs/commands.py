@@ -97,11 +97,13 @@ class Commands(commands.Cog):
             help_data = json.loads(encoded_data)
 
         title = help_data["default"]["title"]
+        colour = 0xB91C36
+        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
 
         # Retrieves command - useful if user wants to use a commands alias
         command = self.bot.get_command(str(command))
 
-        if command is not None: # Command exists
+        if command is not None and command.name in help_data.keys():  # Command exists
             # Grabbing title, footer, description and notes (if that exists)
             title += help_data[command.name]["title"]
             footer = "Aliases: {}".format(", ".join(command.aliases))
@@ -110,14 +112,18 @@ class Commands(commands.Cog):
             if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
                 description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
 
+            # Different colour for owner commands to help distinguish easier
+            if command.cog.qualified_name == "Owner":
+                colour = 0xB32DBF
+                thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
+
         else:  # If no command exists it uses the default description
             description = "\n".join(help_data["default"]["description"])
             footer = ""
 
-        embed = discord.Embed(title="{}**".format(title), description=description, colour=0xA03D5C)
+        embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
         embed.set_footer(text=footer)
 
-        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
         embed.set_thumbnail(url="attachment://thumbnail.png")
         await ctx.send(embed=embed, file=thumbnail)
 
