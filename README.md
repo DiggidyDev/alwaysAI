@@ -12,6 +12,4 @@ The unofficial official alwaysAI discord bot repo!
 ## Setup
 Add in the data folder a `token.secret` file put within it the bots token.
 
-Run the following in your command prompt:  
-`set PATH=%PATH%;C:\path\to\wkhtmltopdf\bin`  
-This is used for converting a HTML string to an image (legend for semantic segmentation).
+Add the downloaded `wkhtmltoimage.exe` to `/wkhtml` (as it's too big to upload to github).
