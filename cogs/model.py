@@ -105,7 +105,8 @@ def semantic_base(model, image_array):
     # Build legend into image and save it to a file
     legend_html = semantic_segmentation.build_legend()
     config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
-    imgkit.from_string(legend_html, "/data/legend.png", config=config)
+    options = {"quiet": ""}
+    imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
 
     # Apply the semantic segmentation mask onto the given image
     results = semantic_segmentation.segment_image(image_array)
@@ -195,7 +196,7 @@ class Model(commands.Cog):
 
                             if category == "SemanticSegmentation":
                                 legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
-                                image_legend = discord.File("legend.png")
+                                image_legend = discord.File("data/legend.png")
                                 legend_embed.set_image(url="attachment://legend.png")
                                 await ctx.send(embed=legend_embed, file=image_legend)
 
