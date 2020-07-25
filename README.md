@@ -12,4 +12,4 @@ The unofficial official alwaysAI discord bot repo!
 ## Setup
 Add in the data folder a `token.secret` file put within it the bots token.
 
-Add the downloaded `wkhtmltoimage.exe` to `/bin` (as it's too big to upload to github).
+Add the downloaded `wkhtmltoimage.exe` to `/wkhtmltopdf`.
