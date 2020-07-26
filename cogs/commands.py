@@ -22,7 +22,7 @@ class Commands(commands.Cog):
         if not self.bot.docs:  # If the find command has already been used, then this acts as a cache, almost - it'll
             # only need to fetch the docs once per boot/reload
             process = Popen(["python", "-m", "sphinx.ext.intersphinx", "https://alwaysai.co/docs/objects.inv"],
-                            stdout=PIPE)
+                            stdout=PIPE, stderr=PIPE)
             output = process.communicate()
 
             self.bot.docs = output  # Using a bot variable which will be used to create the lookup dict
@@ -36,8 +36,9 @@ class Commands(commands.Cog):
             self.bot.lookup = {}
             sections = []
 
-            # Doesn't like UTF-8 codec, hence \/
-            for section in docs[0].decode("cp1252").split("py:")[1:]:
+            # Doesn't like UTF-8 codec, hence cp1252.
+            # Also force ignore errors. Only temporary though!
+            for section in docs[0].decode("cp1252", "ignore").split("py:")[1:]:
 
                 sectors = section.split()  # Removing whitespace
 
@@ -137,31 +138,32 @@ class Commands(commands.Cog):
         await ctx.send(embed=embed, file=thumbnail)
 
     @commands.command(aliases=["f", "search"])
-    async def find(self, ctx, *, query):
-        async with ctx.typing():
-            suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
+    async def find(self, ctx, *queries):
+        for query in queries:
+            async with ctx.typing():
+                suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-            # Get each object's link from the lookup dictionary created earlier
-            links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
-                                                                          "method", "module", "class"]]
+                # Get each object's link from the lookup dictionary created earlier
+                links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
+                                                                              "method", "module", "class"]]
 
-            # Removes the preceding edgeiq. from each object
-            results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
+                # Removes the preceding edgeiq. from each object
+                results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
 
-            # General fancifying of the results
-            results_count_true = len(links)
-            results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
-            results_count = results_short.count("\n") + 1 if len(
-                results) <= 2048 and results_count_true != 0 else results_short.count("\n")
+                # General fancifying of the results
+                results_count_true = len(links)
+                results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
+                results_count = results_short.count("\n") + 1 if len(
+                    results) <= 2048 and results_count_true != 0 else results_short.count("\n")
 
-            embed = discord.Embed(title="{} Result{}".format(results_count, "s" if results_count != 1 else ""),
-                                  description=results_short,
-                                  colour=0x8b0048)
+                embed = discord.Embed(title="{} Result{}".format(results_count, "s" if results_count != 1 else ""),
+                                      description=results_short,
+                                      colour=0x8b0048)
 
-            filtered_results = results_count_true - results_count
-            if filtered_results > 0:
-                embed.set_footer(
-                    text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
+                filtered_results = results_count_true - results_count
+                if filtered_results > 0:
+                    embed.set_footer(
+                        text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
 
             await ctx.send(embed=embed)
 

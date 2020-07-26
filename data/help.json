@@ -7,7 +7,7 @@
 			"**User Commands:**",
 			"`*model <model name> <confidence: optional>`",
 			"`*modelhelp <model name: optional>`",
-			"`*find <term>`\n",
+			"`*find <term> <term> <etc...>`\n",
 			"**Admin Commands:**",
 			"`*cog <variation> <cog name: optional>`",
 			"`*eval <Python code>`",
@@ -64,8 +64,9 @@
 		"title": "~ Find Command",
 		"description": [
 			"*Lets you search the documentation and visit a result on the documentation website.*\n",
-			"`*find <query>`\n",
+			"`*find <query> <query> <etc...>`\n",
 			"`<query>` ~ the term you want to search for. Isn't case sensitive but is sensitive to exact words.\n",
+			"Multiple queries are supported - separated via spaces.\n",
 			"Example: `*find Detection`"
 		]
 	},
