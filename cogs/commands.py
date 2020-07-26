@@ -9,17 +9,8 @@ from bot import generate_user_error_embed, send_traceback
 from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
-async def model_help_react(message):
-    await message.add_reaction("\U000023ea")  # Left fast
-    await message.add_reaction("\U00002b05")  # Left
-    await message.add_reaction("\U000027a1")  # Right
-    await message.add_reaction("\U000023e9")  # Right fast
-    await message.add_reaction("<:cross:671116183780720670>")  # Cross
-
-
 class Commands(commands.Cog):
     # TODO Install more models
-    # TODO Model install command - owner only
 
     def __init__(self, bot):
         self.bot = bot
@@ -92,41 +83,58 @@ class Commands(commands.Cog):
 
         return suggestions
 
+    @staticmethod
+    async def model_help_react(message):
+        await message.add_reaction("\U000023ea")  # Left fast
+        await message.add_reaction("\U00002b05")  # Left
+        await message.add_reaction("\U000027a1")  # Right
+        await message.add_reaction("\U000023e9")  # Right fast
+        await message.add_reaction("<:cross:671116183780720670>")  # Cross
+
+    @staticmethod
+    def limit(text, limit_int):
+        text = str(text)
+        if len(text) > limit_int:
+            return text[:limit_int-3] + "..."
+        return text
+
     @commands.command(aliases=["h"])
     async def help(self, ctx, command=None):
-        with open("data/help.json", "r") as json_file:
-            encoded_data = json_file.read()
-            help_data = json.loads(encoded_data)
+        async with ctx.typing():
+            with open("data/help.json", "r") as json_file:
+                encoded_data = json_file.read()
+                help_data = json.loads(encoded_data)
 
-        title = help_data["default"]["title"]
-        colour = 0xB91C36
-        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
+            title = help_data["default"]["title"]
+            colour = 0xB91C36
+            thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
 
-        # Retrieves command - useful if user wants to use a commands alias
-        command = self.bot.get_command(str(command))
+            # Retrieves command - useful if user wants to use a commands alias
+            command = self.bot.get_command(str(command))
 
-        if command is not None and command.name in help_data.keys():  # Command exists
-            # Grabbing title, footer, description and notes (if that exists)
-            title += help_data[command.name]["title"]
-            footer = "Aliases: {}".format(", ".join(command.aliases))
-            description = "\n".join(help_data[command.name]["description"])
+            if command is not None and command.name in help_data.keys():  # Command exists
+                # Grabbing title, footer, description and notes (if that exists)
+                title += help_data[command.name]["title"]
+                footer = "Aliases: {}".format(", ".join(command.aliases))
+                description = "\n".join(help_data[command.name]["description"])
 
-            if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
-                description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
+                # Basically just a special formatted description addition
+                if "formatted" in help_data[command.name].keys():
+                    description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
 
-            # Different colour for owner commands to help distinguish easier
-            if command.cog.qualified_name == "Owner":
-                colour = 0xB32DBF
-                thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
+                # Different colour for owner commands to help distinguish easier
+                if command.cog.qualified_name == "Owner":
+                    colour = 0xB32DBF
+                    thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
 
-        else:  # If no command exists it uses the default description
-            description = "\n".join(help_data["default"]["description"])
-            footer = ""
+            else:  # If no command exists it uses the default description
+                description = "\n".join(help_data["default"]["description"])
+                footer = ""
 
-        embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
-        embed.set_footer(text=footer)
+            embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
+            embed.set_footer(text=footer)
 
-        embed.set_thumbnail(url="attachment://thumbnail.png")
+            embed.set_thumbnail(url="attachment://thumbnail.png")
         await ctx.send(embed=embed, file=thumbnail)
 
     @commands.command(aliases=["f", "search"])
@@ -173,7 +181,6 @@ class Commands(commands.Cog):
         if not error_handled:
             await send_traceback(ctx, error)
 
-    # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
         model_name = get_model_by_alias(model_name)
@@ -206,7 +213,7 @@ class Commands(commands.Cog):
             embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
 
             embed_message = await ctx.send(embed=embed)
-            await model_help_react(embed_message)
+            await self.model_help_react(embed_message)
 
             # Logic behind whether a user reaction is accepted or not
             def check(reaction, user):
@@ -245,34 +252,46 @@ class Commands(commands.Cog):
                     await embed_message.edit(embed=embed)
 
         else:
-            data = get_model_info(model_name)
-            aliases = get_model_aliases(model_name)
+            async with ctx.typing():
+                data = get_model_info(model_name)
+                aliases = get_model_aliases(model_name)
 
-            # Adding spaces between words
-            # SemanticSegmentation -> Semantic Segmentation
-            category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
-            category = " ".join(category_split)
+                # Adding spaces between words
+                # SemanticSegmentation -> Semantic Segmentation
+                category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
+                category = " ".join(category_split)
 
-            description = "**Description:** {}\n" \
-                          "**Category:** {}\n" \
-                          "**License:** {}\n\n" \
-                          "**Inference Time:** {}\n" \
-                          "**Framework:** {}\n" \
-                          "**Dataset:** {}\n" \
-                          "**Version:** {}\n\n" \
-                          "**Aliases:** {}".format(data["description"],
-                                                   category,
-                                                   data["license"],
-                                                   data["inference_time"],
-                                                   data["model_parameters_framework_type"],
-                                                   data["dataset"],
-                                                   data["version"],
-                                                   ", ".join(aliases[:-1]))
+                embed_description = self.limit(data["description"], 1000)
+                embed_license = self.limit(data["license"], 50)
+                embed_inf_time = self.limit(data["inference_time"], 20)
+                embed_framework = self.limit(data["model_parameters_framework_type"], 50)
+                embed_dataset = self.limit(data["dataset"], 50)
+                embed_version = self.limit(data["version"], 10)
 
-            embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
-            thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
-            embed.set_thumbnail(url="attachment://thumbnail.png")
-            await ctx.send(embed=embed, file=thumbnail)
+                description = "**Description:** {}\n" \
+                              "**Category:** {}\n" \
+                              "**License:** {}\n\n" \
+                              "**Inference Time:** {}\n" \
+                              "**Framework:** {}\n" \
+                              "**Dataset:** {}\n" \
+                              "**Version:** {}\n\n" \
+                              "**Aliases:** {}".format(embed_description,
+                                                       category,
+                                                       embed_license,
+                                                       embed_inf_time,
+                                                       embed_framework,
+                                                       embed_dataset,
+                                                       embed_version,
+                                                       ", ".join(aliases[:-1]))
+
+                embed = discord.Embed(title=data["id"],
+                                      url=data["website_url"],
+                                      description=description,
+                                      colour=0x8b0048)
+                thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]),
+                                         filename="thumbnail.png")
+                embed.set_thumbnail(url="attachment://thumbnail.png")
+                await ctx.send(embed=embed, file=thumbnail)
 
     @model_help.error
     async def model_help_error(self, ctx, error):

@@ -64,26 +64,26 @@ class Owner(commands.Cog):
         :param variant: Type of cog modifier, can be: 'Load', 'Unload', 'Reload', 'Reloadall'
         :param cog_list: List of cogs to be modified
         """
-        variant = variant.title().strip()
-        desc = ""
-        if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
-            message = "```InvalidVariation - please include a valid cog variation```\n\n" \
-                      "For example: `*cog reload cogs.model`\n" \
-                      "Variations are: load, unload, reload and reloadall"
-            await generate_user_error_embed(ctx, message)
-            return
-
-        if len(cog_list) == 0 and variant != "Reloadall":
-            message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
-                      "For example: `*cog reload cogs.model`\n" \
-                      "All cogs names will start with `cogs.`. For example cogs.model"
-            await generate_user_error_embed(ctx, message)
-            return
-
-        if variant == "Reloadall":
-            cog_list = self.bot.cog_list
-
         async with ctx.typing():
+            variant = variant.title().strip()
+            desc = ""
+            if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
+                message = "```InvalidVariation - please include a valid cog variation```\n\n" \
+                          "For example: `*cog reload cogs.model`\n" \
+                          "Variations are: load, unload, reload and reloadall"
+                await generate_user_error_embed(ctx, message)
+                return
+
+            if len(cog_list) == 0 and variant != "Reloadall":
+                message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
+                          "For example: `*cog reload cogs.model`\n" \
+                          "All cogs names will start with `cogs.`. For example cogs.model"
+                await generate_user_error_embed(ctx, message)
+                return
+
+            if variant == "Reloadall":
+                cog_list = self.bot.cog_list
+
             for cog in cog_list:
                 try:
                     if variant in ["Unload", "Reload", "Reloadall"]:
