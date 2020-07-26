@@ -55,7 +55,7 @@ class Owner(commands.Cog):
                                               "{}"
                                               "```".format(code, result_string),
                                   colour=self.colour)
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=["c", "cogs"], hidden=True)
     async def cog(self, ctx, variant, *cog_list):
@@ -95,7 +95,7 @@ class Owner(commands.Cog):
                     desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
 
             embed = discord.Embed(title=variant, description=desc, colour=self.colour)
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @cog.error
     async def cog_error(self, ctx, error):

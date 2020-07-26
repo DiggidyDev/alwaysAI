@@ -95,7 +95,17 @@ def classification_base(model, confidence, image_array):
     if results.predictions:
         image_text = "{}, {}%".format(results.predictions[0].label.title().strip(),
                                       round(results.predictions[0].confidence * 100, 2))
-        cv2.putText(image_array, image_text, (5, 25), cv2.QT_FONT_NORMAL, 0.7, (0, 0, 255), 2)
+        label_width, label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, 1, 2)[0]
+        scale = image_array.shape[1] / label_width
+
+        new_label_width, new_label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, scale, 2)[0]
+        cv2.putText(image_array,
+                    image_text,
+                    (0, new_label_height + 5),
+                    cv2.QT_FONT_NORMAL,
+                    scale,
+                    (0, 0, 255),
+                    1)
 
         return image_array, results, image_text
     return image_array, results, None

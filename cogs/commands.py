@@ -111,7 +111,8 @@ class Commands(commands.Cog):
                 footer = "Aliases: {}".format(", ".join(command.aliases))
                 description = "\n".join(help_data[command.name]["description"])
 
-                if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
+                # Basically just a special formatted description addition
+                if "formatted" in help_data[command.name].keys():
                     description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
 
                 # Different colour for owner commands to help distinguish easier
@@ -127,7 +128,7 @@ class Commands(commands.Cog):
             embed.set_footer(text=footer)
 
             embed.set_thumbnail(url="attachment://thumbnail.png")
-            await ctx.send(embed=embed, file=thumbnail)
+        await ctx.send(embed=embed, file=thumbnail)
 
     @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *, query):
@@ -175,76 +176,76 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
-        async with ctx.typing():
-            model_name = get_model_by_alias(model_name)
+        model_name = get_model_by_alias(model_name)
 
-            if model_name is None:  # No specified model so show list of models
-                with open("alwaysai.app.json", "r") as json_file:
-                    encoded_data = json_file.read()
-                    decoded_data = json.loads(encoded_data)
+        if model_name is None:  # No specified model so show list of models
+            with open("alwaysai.app.json", "r") as json_file:
+                encoded_data = json_file.read()
+                decoded_data = json.loads(encoded_data)
 
-                # Formatting all models into a 2D list - each inner list is an unformatted page
-                models_per_page = 10
-                model_list = list(decoded_data["models"].keys())
-                models_split = [model_list[x:x + models_per_page] for x in range(0, len(model_list), models_per_page)]
+            # Formatting all models into a 2D list - each inner list is an unformatted page
+            models_per_page = 10
+            model_list = list(decoded_data["models"].keys())
+            models_split = [model_list[x:x + models_per_page] for x in range(0, len(model_list), models_per_page)]
 
-                # Splitting the page lists into page strings and formatting them to make em look good
-                pages = ["`{}`\n\u200b".format("`\n`".join(inner_list)) for inner_list in models_split]
-                current_page_num = 0
+            # Splitting the page lists into page strings and formatting them to make em look good
+            pages = ["`{}`\n\u200b".format("`\n`".join(inner_list)) for inner_list in models_split]
+            current_page_num = 0
 
-                if len(pages) == 0:
-                    message = "```MissingModels - no models have been installed for this bot.```\n\n" \
-                              "Unless you own the bot there's not much you can do.\n" \
-                              "Try to contact the owner of the bot if you ever see this bug."
-                    await generate_user_error_embed(ctx, message)
+            if len(pages) == 0:
+                message = "```MissingModels - no models have been installed for this bot.```\n\n" \
+                          "Unless you own the bot there's not much you can do.\n" \
+                          "Try to contact the owner of the bot if you ever see this bug."
+                await generate_user_error_embed(ctx, message)
+                return
+
+            title = "**Model List**"
+            colour = 0x8b0048
+
+            embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+            embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+
+            embed_message = await ctx.send(embed=embed)
+            await model_help_react(embed_message)
+
+            # Logic behind whether a user reaction is accepted or not
+            def check(reaction, user):
+                valid_emoji_list = ["⏪", "⬅", "➡", "⏩", "<:cross:671116183780720670>"]
+                return str(reaction) in valid_emoji_list and str(reaction.message) == str(embed_message) and \
+                       user == ctx.author
+
+            # Wait for a users reaction
+            while True:
+                reaction, user = await self.bot.wait_for("reaction_add", check=check)
+                await embed_message.remove_reaction(str(reaction.emoji), user)
+
+                emoji = str(reaction)
+
+                page_changed = True
+
+                if emoji == "<:cross:671116183780720670>":  # Close model_help embed
+                    await embed_message.delete()
                     return
 
-                title = "**Model List**"
-                colour = 0x8b0048
+                elif emoji == "⏪" and current_page_num != 0:  # Go to first page
+                    current_page_num = 0
+                elif emoji == "⬅" and current_page_num != 0:  # Go back a page
+                    current_page_num -= 1
+                elif emoji == "➡" and current_page_num != len(pages) - 1:  # Go forward a page
+                    current_page_num += 1
+                elif emoji == "⏩" and current_page_num != len(pages) - 1:  # Go to last page
+                    current_page_num = len(pages) - 1
+                else:
+                    page_changed = False
 
-                embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
-                embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+                if page_changed:  # Only need to edit the message if the page needs to be changed
+                    embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+                    embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
 
-                embed_message = await ctx.send(embed=embed)
-                await model_help_react(embed_message)
+                    await embed_message.edit(embed=embed)
 
-                # Logic behind whether a user reaction is accepted or not
-                def check(reaction, user):
-                    valid_emoji_list = ["⏪", "⬅", "➡", "⏩", "<:cross:671116183780720670>"]
-                    return str(reaction) in valid_emoji_list and str(reaction.message) == str(embed_message) and \
-                           user == ctx.author
-
-                # Wait for a users reaction
-                while True:
-                    reaction, user = await self.bot.wait_for("reaction_add", check=check)
-                    await embed_message.remove_reaction(str(reaction.emoji), user)
-
-                    emoji = str(reaction)
-
-                    page_changed = True
-
-                    if emoji == "<:cross:671116183780720670>":  # Close model_help embed
-                        await embed_message.delete()
-                        return
-
-                    elif emoji == "⏪" and current_page_num != 0:  # Go to first page
-                        current_page_num = 0
-                    elif emoji == "⬅" and current_page_num != 0:  # Go back a page
-                        current_page_num -= 1
-                    elif emoji == "➡" and current_page_num != len(pages) - 1:  # Go forward a page
-                        current_page_num += 1
-                    elif emoji == "⏩" and current_page_num != len(pages) - 1:  # Go to last page
-                        current_page_num = len(pages) - 1
-                    else:
-                        page_changed = False
-
-                    if page_changed:  # Only need to edit the message if the page needs to be changed
-                        embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
-                        embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
-
-                        await embed_message.edit(embed=embed)
-
-            else:
+        else:
+            async with ctx.typing():
                 data = get_model_info(model_name)
                 aliases = get_model_aliases(model_name)
 
