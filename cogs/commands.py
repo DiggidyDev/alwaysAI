@@ -9,14 +9,6 @@ from bot import generate_user_error_embed, send_traceback
 from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
-async def model_help_react(message):
-    await message.add_reaction("\U000023ea")  # Left fast
-    await message.add_reaction("\U00002b05")  # Left
-    await message.add_reaction("\U000027a1")  # Right
-    await message.add_reaction("\U000023e9")  # Right fast
-    await message.add_reaction("<:cross:671116183780720670>")  # Cross
-
-
 class Commands(commands.Cog):
     # TODO Install more models
 
@@ -89,6 +81,14 @@ class Commands(commands.Cog):
              if "/" not in self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])]})
 
         return suggestions
+
+    @staticmethod
+    async def model_help_react(message):
+        await message.add_reaction("\U000023ea")  # Left fast
+        await message.add_reaction("\U00002b05")  # Left
+        await message.add_reaction("\U000027a1")  # Right
+        await message.add_reaction("\U000023e9")  # Right fast
+        await message.add_reaction("<:cross:671116183780720670>")  # Cross
 
     @staticmethod
     def limit(text, limit_int):
@@ -179,7 +179,6 @@ class Commands(commands.Cog):
         if not error_handled:
             await send_traceback(ctx, error)
 
-    # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
         model_name = get_model_by_alias(model_name)
@@ -212,7 +211,7 @@ class Commands(commands.Cog):
             embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
 
             embed_message = await ctx.send(embed=embed)
-            await model_help_react(embed_message)
+            await self.model_help_react(embed_message)
 
             # Logic behind whether a user reaction is accepted or not
             def check(reaction, user):

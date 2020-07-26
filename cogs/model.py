@@ -68,83 +68,83 @@ def get_model_aliases(model_name):
     return None
 
 
-def detection_base(model, confidence, image_array):
-    detector = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
-    detector.load(engine=edgeiq.Engine.DNN)
-
-    centroid_tracker = edgeiq.CentroidTracker(deregister_frames=100, max_distance=50)
-    results = detector.detect_objects(image_array, confidence_level=confidence)
-    objects = centroid_tracker.update(results.predictions)
-
-    predictions = []
-    for (object_id, prediction) in objects.items():
-        prediction.label = "Object {}".format(object_id)
-        predictions.append(prediction)
-
-    image = edgeiq.markup_image(image_array, predictions)
-
-    return image, results, None
-
-
-def classification_base(model, confidence, image_array):
-    classifier = edgeiq.Classification(model)
-    classifier.load(engine=edgeiq.Engine.DNN)
-
-    results = classifier.classify_image(image_array, confidence_level=confidence)
-    if results.predictions:
-        image_text = "{}, {}%".format(results.predictions[0].label.title().strip(),
-                                      round(results.predictions[0].confidence * 100, 2))
-        label_width, label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, 1, 2)[0]
-        scale = image_array.shape[1] / label_width
-
-        new_label_width, new_label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, scale, 2)[0]
-        cv2.putText(image_array,
-                    image_text,
-                    (0, new_label_height + 5),
-                    cv2.QT_FONT_NORMAL,
-                    scale,
-                    (0, 0, 255),
-                    1)
-
-        return image_array, results, image_text
-    return image_array, results, None
-
-
-def pose_base(model, image_array):
-    pose_estimator = edgeiq.PoseEstimation(model)
-    pose_estimator.load(engine=edgeiq.Engine.DNN)
-
-    results = pose_estimator.estimate(image_array)
-    image = results.draw_poses(image_array)
-
-    return image, results
-
-
-def semantic_base(model, image_array):
-    semantic_segmentation = edgeiq.SemanticSegmentation(model)
-    semantic_segmentation.load(engine=edgeiq.Engine.DNN)
-
-    # Build legend into image, save it to a file and crop the whitespace
-    legend_html = semantic_segmentation.build_legend()
-    config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
-    options = {"quiet": ""}
-    imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
-    legend_image = Image.open("legend.png")
-    width, height = legend_image.size
-    legend_image.crop((0, 0, 0.61 * width, height)).save("legend.png")
-
-    # Apply the semantic segmentation mask onto the given image
-    results = semantic_segmentation.segment_image(image_array)
-    mask = semantic_segmentation.build_image_mask(results.class_map)
-    image = edgeiq.blend_images(image_array, mask, 0.5)
-
-    return image, results
-
-
 class Model(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @staticmethod
+    def detection_base(model, confidence, image_array):
+        detector = edgeiq.ObjectDetection(model)  # model example: "alwaysai/res10_300x300_ssd_iter_140000"
+        detector.load(engine=edgeiq.Engine.DNN)
+
+        centroid_tracker = edgeiq.CentroidTracker(deregister_frames=100, max_distance=50)
+        results = detector.detect_objects(image_array, confidence_level=confidence)
+        objects = centroid_tracker.update(results.predictions)
+
+        predictions = []
+        for (object_id, prediction) in objects.items():
+            prediction.label = "Object {}".format(object_id)
+            predictions.append(prediction)
+
+        image = edgeiq.markup_image(image_array, predictions)
+
+        return image, results, None
+
+    @staticmethod
+    def classification_base(model, confidence, image_array):
+        classifier = edgeiq.Classification(model)
+        classifier.load(engine=edgeiq.Engine.DNN)
+
+        results = classifier.classify_image(image_array, confidence_level=confidence)
+        if results.predictions:
+            image_text = "{}, {}%".format(results.predictions[0].label.title().strip(),
+                                          round(results.predictions[0].confidence * 100, 2))
+            label_width, label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, 1, 2)[0]
+            scale = image_array.shape[1] / label_width
+
+            new_label_width, new_label_height = cv2.getTextSize(image_text, cv2.QT_FONT_NORMAL, scale, 2)[0]
+            cv2.putText(image_array,
+                        image_text,
+                        (0, new_label_height + 5),
+                        cv2.QT_FONT_NORMAL,
+                        scale,
+                        (0, 0, 255),
+                        1)
+
+            return image_array, results, image_text
+        return image_array, results, None
+
+    @staticmethod
+    def pose_base(model, image_array):
+        pose_estimator = edgeiq.PoseEstimation(model)
+        pose_estimator.load(engine=edgeiq.Engine.DNN)
+
+        results = pose_estimator.estimate(image_array)
+        image = results.draw_poses(image_array)
+
+        return image, results
+
+    @staticmethod
+    def semantic_base(model, image_array):
+        semantic_segmentation = edgeiq.SemanticSegmentation(model)
+        semantic_segmentation.load(engine=edgeiq.Engine.DNN)
+
+        # Build legend into image, save it to a file and crop the whitespace
+        legend_html = semantic_segmentation.build_legend()
+        config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
+        options = {"quiet": ""}
+        imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
+        legend_image = Image.open("legend.png")
+        width, height = legend_image.size
+        legend_image.crop((0, 0, 0.61 * width, height)).save("legend.png")
+
+        # Apply the semantic segmentation mask onto the given image
+        results = semantic_segmentation.segment_image(image_array)
+        mask = semantic_segmentation.build_image_mask(results.class_map)
+        image = edgeiq.blend_images(image_array, mask, 0.5)
+
+        return image, results
 
     # TODO Fix Alpha Channel issue
     @commands.command(aliases=["m"])
@@ -177,10 +177,10 @@ class Model(commands.Cog):
                 embed_output = ""
 
                 categories = {
-                    "Classification": classification_base,
-                    "ObjectDetection": detection_base,
-                    "PoseEstimation": pose_base,
-                    "SemanticSegmentation": semantic_base
+                    "Classification": self.classification_base,
+                    "ObjectDetection": self.detection_base,
+                    "PoseEstimation": self.pose_base,
+                    "SemanticSegmentation": self.semantic_base
                 }
 
                 if category in ["ObjectDetection", "Classification"]:
