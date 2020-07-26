@@ -14,6 +14,8 @@ Add in the data folder a `token.secret` file put within it the bots token.
 
 Add the downloaded `wkhtmltoimage.exe` to `/wkhtmltopdf`.
 
+To start running the bot run `run.bat`.
+
 ## Data Folder Info
 ### Don't modify
 **png** - images used for embeds
