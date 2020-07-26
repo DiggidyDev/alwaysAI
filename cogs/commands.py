@@ -45,8 +45,9 @@ class Commands(commands.Cog):
             self.bot.lookup = {}
             sections = []
 
-            # Doesn't like UTF-8 codec, hence \/
-            for section in docs[0].decode("utf-8", "ignore").split("py:")[1:]:
+            # Doesn't like UTF-8 codec, hence cp1252.
+            # Also force ignore errors. Only temporary though!
+            for section in docs[0].decode("cp1252", "ignore").split("py:")[1:]:
 
                 sectors = section.split()  # Removing whitespace
 
