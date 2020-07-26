@@ -68,7 +68,7 @@ class Commands(commands.Cog):
         if not self.bot.docs:  # If the find command has already been used, then this acts as a cache, almost - it'll
             # only need to fetch the docs once per boot/reload
             process = Popen(["python", "-m", "sphinx.ext.intersphinx", "https://alwaysai.co/docs/objects.inv"],
-                            stdout=PIPE)
+                            stdout=PIPE, stderr=PIPE)
             output = process.communicate()
 
             self.bot.docs = output  # Using a bot variable which will be used to create the lookup dict
@@ -83,7 +83,7 @@ class Commands(commands.Cog):
             sections = []
 
             # Doesn't like UTF-8 codec, hence \/
-            for section in docs[0].decode("cp1252").split("py:")[1:]:
+            for section in docs[0].decode("utf-8", "ignore").split("py:")[1:]:
 
                 sectors = section.split()  # Removing whitespace
 
