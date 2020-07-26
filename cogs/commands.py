@@ -93,68 +93,70 @@ class Commands(commands.Cog):
 
     @commands.command(aliases=["h"])
     async def help(self, ctx, command=None):
-        with open("data/help.json", "r") as json_file:
-            encoded_data = json_file.read()
-            help_data = json.loads(encoded_data)
+        async with ctx.typing():
+            with open("data/help.json", "r") as json_file:
+                encoded_data = json_file.read()
+                help_data = json.loads(encoded_data)
 
-        title = help_data["default"]["title"]
-        colour = 0xB91C36
-        thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
+            title = help_data["default"]["title"]
+            colour = 0xB91C36
+            thumbnail = discord.File("data/HelpThumbnail.png", filename="thumbnail.png")
 
-        # Retrieves command - useful if user wants to use a commands alias
-        command = self.bot.get_command(str(command))
+            # Retrieves command - useful if user wants to use a commands alias
+            command = self.bot.get_command(str(command))
 
-        if command is not None and command.name in help_data.keys():  # Command exists
-            # Grabbing title, footer, description and notes (if that exists)
-            title += help_data[command.name]["title"]
-            footer = "Aliases: {}".format(", ".join(command.aliases))
-            description = "\n".join(help_data[command.name]["description"])
+            if command is not None and command.name in help_data.keys():  # Command exists
+                # Grabbing title, footer, description and notes (if that exists)
+                title += help_data[command.name]["title"]
+                footer = "Aliases: {}".format(", ".join(command.aliases))
+                description = "\n".join(help_data[command.name]["description"])
 
-            if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
-                description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
+                if "formatted" in help_data[command.name].keys():  # Basically just a special formatted description addition
+                    description += "{}\n\u200b".format("\n> ".join(help_data[command.name]["formatted"]))
 
-            # Different colour for owner commands to help distinguish easier
-            if command.cog.qualified_name == "Owner":
-                colour = 0xB32DBF
-                thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
+                # Different colour for owner commands to help distinguish easier
+                if command.cog.qualified_name == "Owner":
+                    colour = 0xB32DBF
+                    thumbnail = discord.File("data/AdminHelpThumbnail.png", filename="thumbnail.png")
 
-        else:  # If no command exists it uses the default description
-            description = "\n".join(help_data["default"]["description"])
-            footer = ""
+            else:  # If no command exists it uses the default description
+                description = "\n".join(help_data["default"]["description"])
+                footer = ""
 
-        embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
-        embed.set_footer(text=footer)
+            embed = discord.Embed(title="{}**".format(title), description=description, colour=colour)
+            embed.set_footer(text=footer)
 
-        embed.set_thumbnail(url="attachment://thumbnail.png")
-        await ctx.send(embed=embed, file=thumbnail)
+            embed.set_thumbnail(url="attachment://thumbnail.png")
+            await ctx.send(embed=embed, file=thumbnail)
 
     @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *, query):
-        suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
+        async with ctx.typing():
+            suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
 
-        # Get each object's link from the lookup dictionary created earlier
-        links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
-                                                                      "method", "module", "class"]]
+            # Get each object's link from the lookup dictionary created earlier
+            links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
+                                                                          "method", "module", "class"]]
 
-        # Removes the preceding edgeiq. from each object
-        results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
+            # Removes the preceding edgeiq. from each object
+            results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
 
-        # General fancifying of the results
-        results_count_true = len(links)
-        results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
-        results_count = results_short.count("\n") + 1 if len(
-            results) <= 2048 and results_count_true != 0 else results_short.count("\n")
+            # General fancifying of the results
+            results_count_true = len(links)
+            results_short = results[:results.rfind("[", 0, 2048)] if len(results) > 2048 else results
+            results_count = results_short.count("\n") + 1 if len(
+                results) <= 2048 and results_count_true != 0 else results_short.count("\n")
 
-        embed = discord.Embed(title="{} Result{}".format(results_count, "s" if results_count != 1 else ""),
-                              description=results_short,
-                              colour=0x8b0048)
+            embed = discord.Embed(title="{} Result{}".format(results_count, "s" if results_count != 1 else ""),
+                                  description=results_short,
+                                  colour=0x8b0048)
 
-        filtered_results = results_count_true - results_count
-        if filtered_results > 0:
-            embed.set_footer(
-                text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
+            filtered_results = results_count_true - results_count
+            if filtered_results > 0:
+                embed.set_footer(
+                    text="{} other result{} found".format(filtered_results, "s" if filtered_results != 1 else ""))
 
-        await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
 
     @find.error
     async def find_error(self, ctx, error):
@@ -173,103 +175,104 @@ class Commands(commands.Cog):
     # TODO Potential char limiter needed for long descriptions due to embed char limitations
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
-        model_name = get_model_by_alias(model_name)
+        async with ctx.typing():
+            model_name = get_model_by_alias(model_name)
 
-        if model_name is None:  # No specified model so show list of models
-            with open("alwaysai.app.json", "r") as json_file:
-                encoded_data = json_file.read()
-                decoded_data = json.loads(encoded_data)
+            if model_name is None:  # No specified model so show list of models
+                with open("alwaysai.app.json", "r") as json_file:
+                    encoded_data = json_file.read()
+                    decoded_data = json.loads(encoded_data)
 
-            # Formatting all models into a 2D list - each inner list is an unformatted page
-            models_per_page = 10
-            model_list = list(decoded_data["models"].keys())
-            models_split = [model_list[x:x + models_per_page] for x in range(0, len(model_list), models_per_page)]
+                # Formatting all models into a 2D list - each inner list is an unformatted page
+                models_per_page = 10
+                model_list = list(decoded_data["models"].keys())
+                models_split = [model_list[x:x + models_per_page] for x in range(0, len(model_list), models_per_page)]
 
-            # Splitting the page lists into page strings and formatting them to make em look good
-            pages = ["`{}`\n\u200b".format("`\n`".join(inner_list)) for inner_list in models_split]
-            current_page_num = 0
+                # Splitting the page lists into page strings and formatting them to make em look good
+                pages = ["`{}`\n\u200b".format("`\n`".join(inner_list)) for inner_list in models_split]
+                current_page_num = 0
 
-            if len(pages) == 0:
-                message = "```MissingModels - no models have been installed for this bot.```\n\n" \
-                          "Unless you own the bot there's not much you can do.\n" \
-                          "Try to contact the owner of the bot if you ever see this bug."
-                await generate_user_error_embed(ctx, message)
-                return
-
-            title = "**Model List**"
-            colour = 0x8b0048
-
-            embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
-            embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
-
-            embed_message = await ctx.send(embed=embed)
-            await model_help_react(embed_message)
-
-            # Logic behind whether a user reaction is accepted or not
-            def check(reaction, user):
-                valid_emoji_list = ["⏪", "⬅", "➡", "⏩", "<:cross:671116183780720670>"]
-                return str(reaction) in valid_emoji_list and str(reaction.message) == str(embed_message) and \
-                       user == ctx.author
-
-            # Wait for a users reaction
-            while True:
-                reaction, user = await self.bot.wait_for("reaction_add", check=check)
-                await embed_message.remove_reaction(str(reaction.emoji), user)
-
-                emoji = str(reaction)
-
-                page_changed = True
-
-                if emoji == "<:cross:671116183780720670>":  # Close model_help embed
-                    await embed_message.delete()
+                if len(pages) == 0:
+                    message = "```MissingModels - no models have been installed for this bot.```\n\n" \
+                              "Unless you own the bot there's not much you can do.\n" \
+                              "Try to contact the owner of the bot if you ever see this bug."
+                    await generate_user_error_embed(ctx, message)
                     return
 
-                elif emoji == "⏪" and current_page_num != 0:  # Go to first page
-                    current_page_num = 0
-                elif emoji == "⬅" and current_page_num != 0:  # Go back a page
-                    current_page_num -= 1
-                elif emoji == "➡" and current_page_num != len(pages) - 1:  # Go forward a page
-                    current_page_num += 1
-                elif emoji == "⏩" and current_page_num != len(pages) - 1:  # Go to last page
-                    current_page_num = len(pages) - 1
-                else:
-                    page_changed = False
+                title = "**Model List**"
+                colour = 0x8b0048
 
-                if page_changed:  # Only need to edit the message if the page needs to be changed
-                    embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
-                    embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+                embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+                embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
 
-                    await embed_message.edit(embed=embed)
+                embed_message = await ctx.send(embed=embed)
+                await model_help_react(embed_message)
 
-        else:
-            data = get_model_info(model_name)
-            aliases = get_model_aliases(model_name)
+                # Logic behind whether a user reaction is accepted or not
+                def check(reaction, user):
+                    valid_emoji_list = ["⏪", "⬅", "➡", "⏩", "<:cross:671116183780720670>"]
+                    return str(reaction) in valid_emoji_list and str(reaction.message) == str(embed_message) and \
+                           user == ctx.author
 
-            # Adding spaces between words
-            # SemanticSegmentation -> Semantic Segmentation
-            category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
-            category = " ".join(category_split)
+                # Wait for a users reaction
+                while True:
+                    reaction, user = await self.bot.wait_for("reaction_add", check=check)
+                    await embed_message.remove_reaction(str(reaction.emoji), user)
 
-            description = "**Description:** {}\n" \
-                          "**Category:** {}\n" \
-                          "**License:** {}\n\n" \
-                          "**Inference Time:** {}\n" \
-                          "**Framework:** {}\n" \
-                          "**Dataset:** {}\n" \
-                          "**Version:** {}\n\n" \
-                          "**Aliases:** {}".format(data["description"],
-                                                   category,
-                                                   data["license"],
-                                                   data["inference_time"],
-                                                   data["model_parameters_framework_type"],
-                                                   data["dataset"],
-                                                   data["version"],
-                                                   ", ".join(aliases[:-1]))
+                    emoji = str(reaction)
 
-            embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
-            thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
-            embed.set_thumbnail(url="attachment://thumbnail.png")
-            await ctx.send(embed=embed, file=thumbnail)
+                    page_changed = True
+
+                    if emoji == "<:cross:671116183780720670>":  # Close model_help embed
+                        await embed_message.delete()
+                        return
+
+                    elif emoji == "⏪" and current_page_num != 0:  # Go to first page
+                        current_page_num = 0
+                    elif emoji == "⬅" and current_page_num != 0:  # Go back a page
+                        current_page_num -= 1
+                    elif emoji == "➡" and current_page_num != len(pages) - 1:  # Go forward a page
+                        current_page_num += 1
+                    elif emoji == "⏩" and current_page_num != len(pages) - 1:  # Go to last page
+                        current_page_num = len(pages) - 1
+                    else:
+                        page_changed = False
+
+                    if page_changed:  # Only need to edit the message if the page needs to be changed
+                        embed = discord.Embed(title=title, description=pages[current_page_num], colour=colour)
+                        embed.set_footer(text="Page: {}/{}".format(current_page_num + 1, len(pages)))
+
+                        await embed_message.edit(embed=embed)
+
+            else:
+                data = get_model_info(model_name)
+                aliases = get_model_aliases(model_name)
+
+                # Adding spaces between words
+                # SemanticSegmentation -> Semantic Segmentation
+                category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
+                category = " ".join(category_split)
+
+                description = "**Description:** {}\n" \
+                              "**Category:** {}\n" \
+                              "**License:** {}\n\n" \
+                              "**Inference Time:** {}\n" \
+                              "**Framework:** {}\n" \
+                              "**Dataset:** {}\n" \
+                              "**Version:** {}\n\n" \
+                              "**Aliases:** {}".format(data["description"],
+                                                       category,
+                                                       data["license"],
+                                                       data["inference_time"],
+                                                       data["model_parameters_framework_type"],
+                                                       data["dataset"],
+                                                       data["version"],
+                                                       ", ".join(aliases[:-1]))
+
+                embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
+                thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
+                embed.set_thumbnail(url="attachment://thumbnail.png")
+                await ctx.send(embed=embed, file=thumbnail)
 
     @model_help.error
     async def model_help_error(self, ctx, error):
