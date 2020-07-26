@@ -151,16 +151,18 @@ class Model(commands.Cog):
     # TODO Fix Alpha Channel issue
     @commands.command()
     async def model(self, ctx, model, confidence=0.5):  # Only functions for Object Detection FOR NOW
-        async with ctx.typing():
-            attachments = ctx.message.attachments
-            model = get_model_by_alias(model)
-            category = get_model_info(model)["model_parameters_purpose"]
+        attachments = ctx.message.attachments
+        model = get_model_by_alias(model)
+        category = get_model_info(model)["model_parameters_purpose"]
 
-            if len(attachments) == 0:
-                await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
-                return
+        if len(attachments) == 0:
+            await ctx.send("`ERROR: NoAttachment - upload an image with the command.`")
+            return
 
-            for img in attachments:  # Iterating through each image in the message - only works for mobile
+        await ctx.message.delete()
+
+        for img in attachments:  # Iterating through each image in the message - only works for mobile
+            async with ctx.typing():
 
                 # Getting image and converting it to appropriate data type
                 img_bytes = await img.read()
@@ -200,15 +202,14 @@ class Model(commands.Cog):
                 embed.set_image(url="attachment://results.png")
                 embed.set_footer(text="Inference time: {} seconds".format(round(results.duration, 5)))
 
-            await ctx.message.delete()
-            await ctx.send(embed=embed, file=image_disc)
-            if category == "SemanticSegmentation":
+                await ctx.send(embed=embed, file=image_disc)
+        if category == "SemanticSegmentation":
 
-                legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
-                image_legend = discord.File("legend.png")
-                legend_embed.set_image(url="attachment://legend.png")
+            legend_embed = discord.Embed(title="Legend", colour=0xC63D3D)
+            image_legend = discord.File("legend.png")
+            legend_embed.set_image(url="attachment://legend.png")
 
-                await ctx.send(embed=legend_embed, file=image_legend)
+            await ctx.send(embed=legend_embed, file=image_legend)
 
 
 def setup(bot):

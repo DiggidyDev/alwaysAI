@@ -19,23 +19,24 @@ class Owner(commands.Cog):
 
     @commands.command(aliases=["e"], hidden=True)
     async def eval(self, ctx, *, code):
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        exec("async def __exc(self, ctx):\n    {}".format(code))
-        await locals()["__exc"](self, ctx)
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        embed = discord.Embed(title="Evaluation",
-                              description="Input:"
-                                          "```python\n"
-                                          "{}"
-                                          "```\n\n"
-                                          "Output:"
-                                          "```python\n\u200b"
-                                          "{}"
-                                          "```".format(code, result_string),
-                              colour=self.colour)
+        async with ctx.typing():
+            old_stdout = sys.stdout
+            result = StringIO()
+            sys.stdout = result
+            exec("async def __exc(self, ctx):\n    {}".format(code))
+            await locals()["__exc"](self, ctx)
+            sys.stdout = old_stdout
+            result_string = result.getvalue()
+            embed = discord.Embed(title="Evaluation",
+                                  description="Input:"
+                                              "```python\n"
+                                              "{}"
+                                              "```\n\n"
+                                              "Output:"
+                                              "```python\n\u200b"
+                                              "{}"
+                                              "```".format(code, result_string),
+                                  colour=self.colour)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["c", "cogs"], hidden=True)
@@ -57,17 +58,18 @@ class Owner(commands.Cog):
             if variant == "Reloadall":
                 cog_list = self.bot.cog_list
 
-        for cog in cog_list:
-            try:
-                if variant in ["Unload", "Reload", "Reloadall"]:
-                    self.bot.unload_extension(cog)
-                if variant in ["Load", "Reload", "Reloadall"]:
-                    self.bot.load_extension(cog)
-                desc += "<:tick:671116183751360523> | {}\n".format(cog)
-            except Exception as e:
-                desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
+        async with ctx.typing():
+            for cog in cog_list:
+                try:
+                    if variant in ["Unload", "Reload", "Reloadall"]:
+                        self.bot.unload_extension(cog)
+                    if variant in ["Load", "Reload", "Reloadall"]:
+                        self.bot.load_extension(cog)
+                    desc += "<:tick:671116183751360523> | {}\n".format(cog)
+                except Exception as e:
+                    desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
 
-        embed = discord.Embed(title=variant, description=desc, colour=self.colour)
+            embed = discord.Embed(title=variant, description=desc, colour=self.colour)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["system", "stats", "ping"])
