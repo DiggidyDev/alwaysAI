@@ -37,23 +37,24 @@ class Owner(commands.Cog):
 
     @commands.command(aliases=["e"], hidden=True)
     async def eval(self, ctx, *, code):
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        exec("async def __exc(self, ctx):\n    {}".format(code))
-        await locals()["__exc"](self, ctx)
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        embed = discord.Embed(title="Evaluation",
-                              description="Input:"
-                                          "```python\n"
-                                          "{}"
-                                          "```\n\n"
-                                          "Output:"
-                                          "```python\n\u200b"
-                                          "{}"
-                                          "```".format(code, result_string),
-                              colour=self.colour)
+        async with ctx.typing():
+            old_stdout = sys.stdout
+            result = StringIO()
+            sys.stdout = result
+            exec("async def __exc(self, ctx):\n    {}".format(code))
+            await locals()["__exc"](self, ctx)
+            sys.stdout = old_stdout
+            result_string = result.getvalue()
+            embed = discord.Embed(title="Evaluation",
+                                  description="Input:"
+                                              "```python\n"
+                                              "{}"
+                                              "```\n\n"
+                                              "Output:"
+                                              "```python\n\u200b"
+                                              "{}"
+                                              "```".format(code, result_string),
+                                  colour=self.colour)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["c", "cogs"], hidden=True)
@@ -63,36 +64,37 @@ class Owner(commands.Cog):
         :param variant: Type of cog modifier, can be: 'Load', 'Unload', 'Reload', 'Reloadall'
         :param cog_list: List of cogs to be modified
         """
-        variant = variant.title().strip()
-        desc = ""
-        if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
-            message = "```InvalidVariation - please include a valid cog variation```\n\n" \
-                      "For example: `*cog reload cogs.model`\n" \
-                      "Variations are: load, unload, reload and reloadall"
-            await generate_user_error_embed(ctx, message)
-            return
+        async with ctx.typing():
+            variant = variant.title().strip()
+            desc = ""
+            if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
+                message = "```InvalidVariation - please include a valid cog variation```\n\n" \
+                          "For example: `*cog reload cogs.model`\n" \
+                          "Variations are: load, unload, reload and reloadall"
+                await generate_user_error_embed(ctx, message)
+                return
 
-        if len(cog_list) == 0 and variant != "Reloadall":
-            message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
-                      "For example: `*cog reload cogs.model`\n" \
-                      "All cogs names will start with `cogs.`. For example cogs.model"
-            await generate_user_error_embed(ctx, message)
-            return
+            if len(cog_list) == 0 and variant != "Reloadall":
+                message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
+                          "For example: `*cog reload cogs.model`\n" \
+                          "All cogs names will start with `cogs.`. For example cogs.model"
+                await generate_user_error_embed(ctx, message)
+                return
 
-        if variant == "Reloadall":
-            cog_list = self.bot.cog_list
+            if variant == "Reloadall":
+                cog_list = self.bot.cog_list
 
-        for cog in cog_list:
-            try:
-                if variant in ["Unload", "Reload", "Reloadall"]:
-                    self.bot.unload_extension(cog)
-                if variant in ["Load", "Reload", "Reloadall"]:
-                    self.bot.load_extension(cog)
-                desc += "<:tick:671116183751360523> | {}\n".format(cog)
-            except Exception as e:
-                desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
+            for cog in cog_list:
+                try:
+                    if variant in ["Unload", "Reload", "Reloadall"]:
+                        self.bot.unload_extension(cog)
+                    if variant in ["Load", "Reload", "Reloadall"]:
+                        self.bot.load_extension(cog)
+                    desc += "<:tick:671116183751360523> | {}\n".format(cog)
+                except Exception as e:
+                    desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
 
-        embed = discord.Embed(title=variant, description=desc, colour=self.colour)
+            embed = discord.Embed(title=variant, description=desc, colour=self.colour)
         await ctx.send(embed=embed)
 
     @cog.error
