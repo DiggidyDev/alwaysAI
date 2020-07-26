@@ -86,7 +86,6 @@ def detection_base(model, confidence, image_array):
     return image, results, None
 
 
-# TODO Make font scale with image size - look into getTextSize() potentially for width of text
 def classification_base(model, confidence, image_array):
     classifier = edgeiq.Classification(model)
     classifier.load(engine=edgeiq.Engine.DNN)
@@ -121,7 +120,6 @@ def pose_base(model, image_array):
     return image, results
 
 
-# TODO Find a way to show the legend - maybe HTML -> PNG and then combine the image with that?
 def semantic_base(model, image_array):
     semantic_segmentation = edgeiq.SemanticSegmentation(model)
     semantic_segmentation.load(engine=edgeiq.Engine.DNN)

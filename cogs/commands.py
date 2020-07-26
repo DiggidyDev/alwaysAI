@@ -19,7 +19,6 @@ async def model_help_react(message):
 
 class Commands(commands.Cog):
     # TODO Install more models
-    # TODO Model install command - owner only
 
     def __init__(self, bot):
         self.bot = bot
@@ -90,6 +89,13 @@ class Commands(commands.Cog):
              if "/" not in self.bot.docs[self.bot.docs.rfind(" ", 0, pos[0]) + 1:self.bot.docs.find(" ", pos[1])]})
 
         return suggestions
+
+    @staticmethod
+    def limit(text, limit_int):
+        text = str(text)
+        if len(text) > limit_int:
+            return text[:limit_int-3] + "..."
+        return text
 
     @commands.command(aliases=["h"])
     async def help(self, ctx, command=None):
@@ -254,6 +260,13 @@ class Commands(commands.Cog):
                 category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
                 category = " ".join(category_split)
 
+                embed_description = self.limit(data["description"], 1000)
+                embed_license = self.limit(data["license"], 50)
+                embed_inf_time = self.limit(data["inference_time"], 20)
+                embed_framework = self.limit(data["model_parameters_framework_type"], 50)
+                embed_dataset = self.limit(data["dataset"], 50)
+                embed_version = self.limit(data["version"], 10)
+
                 description = "**Description:** {}\n" \
                               "**Category:** {}\n" \
                               "**License:** {}\n\n" \
@@ -261,17 +274,21 @@ class Commands(commands.Cog):
                               "**Framework:** {}\n" \
                               "**Dataset:** {}\n" \
                               "**Version:** {}\n\n" \
-                              "**Aliases:** {}".format(data["description"],
+                              "**Aliases:** {}".format(embed_description,
                                                        category,
-                                                       data["license"],
-                                                       data["inference_time"],
-                                                       data["model_parameters_framework_type"],
-                                                       data["dataset"],
-                                                       data["version"],
+                                                       embed_license,
+                                                       embed_inf_time,
+                                                       embed_framework,
+                                                       embed_dataset,
+                                                       embed_version,
                                                        ", ".join(aliases[:-1]))
 
-                embed = discord.Embed(title=data["id"], url=data["website_url"], description=description, colour=0x8b0048)
-                thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]), filename="thumbnail.png")
+                embed = discord.Embed(title=data["id"],
+                                      url=data["website_url"],
+                                      description=description,
+                                      colour=0x8b0048)
+                thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]),
+                                         filename="thumbnail.png")
                 embed.set_thumbnail(url="attachment://thumbnail.png")
                 await ctx.send(embed=embed, file=thumbnail)
 
