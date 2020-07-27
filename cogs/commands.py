@@ -1,4 +1,5 @@
 import json
+import random
 import re
 from subprocess import Popen, PIPE
 
@@ -140,10 +141,12 @@ class Commands(commands.Cog):
 
     @commands.command(aliases=["i"])
     async def info(self, ctx):
-        async with ctx.typing():
+        async with ctx.typing():  # Diggy#0649  TestedBubble#0745
+            devs = ["Diggy#0649", "TestedBubble#0745"]
+            random.shuffle(devs)
             description = "This bot was made by:\n" \
-                          "`TestedBubble#0745` and `Diggy#0649`\n\n" \
-                          "For help on using the bot, try using `*help` and `*help <command>`"
+                          "`{}` and `{}`\n\n" \
+                          "For help on using the bot, try using `*help` and `*help <command>`".format(devs[0], devs[1])
             embed = discord.Embed(title="**Info**", description=description, colour=0x4CD4E0)
         await ctx.send(embed=embed)
 
