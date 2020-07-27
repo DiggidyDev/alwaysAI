@@ -26,6 +26,9 @@ class Owner(commands.Cog):
     async def cog_command_error(self, ctx, error):
         error_handled = False
 
+        if hasattr(ctx.command, "on_error"):
+            return
+
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
             message = "```NoPermissions - You don't have the correct permissions to do this```\n\n" \
                       "If you believe you should then let the bot developer know."
