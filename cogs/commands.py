@@ -1,4 +1,5 @@
 import json
+import random
 import re
 from subprocess import Popen, PIPE
 
@@ -115,8 +116,9 @@ class Commands(commands.Cog):
             if command is not None and command.name in help_data.keys():  # Command exists
                 # Grabbing title, footer, description and notes (if that exists)
                 title += help_data[command.name]["title"]
-                footer = "Aliases: {}".format(", ".join(command.aliases))
                 description = "\n".join(help_data[command.name]["description"])
+                print(command.aliases)
+                footer = "" if len(command.aliases) == 0 else "Aliases: {}".format(", ".join(command.aliases))
 
                 # Basically just a special formatted description addition
                 if "formatted" in help_data[command.name].keys():
@@ -137,18 +139,31 @@ class Commands(commands.Cog):
             embed.set_thumbnail(url="attachment://thumbnail.png")
         await ctx.send(embed=embed, file=thumbnail)
 
+    @commands.command(aliases=["i"])
+    async def info(self, ctx):
+        async with ctx.typing():  # Diggy#0649  TestedBubble#0745
+            devs = ["Diggy#0649", "TestedBubble#0745"]
+            random.shuffle(devs)
+            description = "This bot was made by:\n" \
+                          "`{}` and `{}`\n\n" \
+                          "For help on using the bot, try using `*help` and `*help <command>`".format(devs[0], devs[1])
+            embed = discord.Embed(title="**Info**", description=description, colour=0x4CD4E0)
+        await ctx.send(embed=embed)
+
     @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *queries):
         for query in queries:
             async with ctx.typing():
-                suggestions = await self.fetch(query)  # Made asynchronous due to subprocess' Popen being a blocking call
+                # Made asynchronous due to subprocess' Popen being a blocking call
+                suggestions = await self.fetch(query)
 
                 # Get each object's link from the lookup dictionary created earlier
                 links = [self.bot.lookup[s] for s in suggestions if s not in ["attribute", "function",
                                                                               "method", "module", "class"]]
 
                 # Removes the preceding edgeiq. from each object
-                results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links, suggestions)])
+                results = "\n".join(["[`{}`]({})".format(r.replace("edgeiq.", ""), l) for l, r in zip(links,
+                                                                                                      suggestions)])
 
                 # General fancifying of the results
                 results_count_true = len(links)
