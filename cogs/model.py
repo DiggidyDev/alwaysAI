@@ -31,19 +31,23 @@ def flatten(d, parent_key="", sep="_"):
     return dict(items)
 
 
+def read_json(path):
+    with open(path, "r") as json_file:
+        return json.loads(json_file.read())
+
+
 def get_model_info(model_name):
     """
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
     :return: Dict, contains the data you requested in the same order
     """
-    with open("models/{}/alwaysai.model.json".format(model_name), "r") as json_file:
-        decoded_data = flatten(json.loads(json_file.read()))
+    decoded_data = flatten(read_json("models/{}/alwaysai.model.json"))
 
-        for key in decoded_data:
-            if decoded_data[key] == "":
-                decoded_data[key] = None
+    for key in decoded_data:
+        if decoded_data[key] == "":
+            decoded_data[key] = None
 
-        return decoded_data
+    return decoded_data
 
 
 def get_model_by_alias(alias):
@@ -287,5 +291,4 @@ def setup(bot):
     bot.add_cog(Model(bot))
 
 
-with open("data/aliases.json", "r") as json_file:
-    model_aliases = json.loads(json_file.read())
+model_aliases = read_json("data/aliases.json")
