@@ -75,6 +75,7 @@ class Model(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
 
     @staticmethod
     def detection_base(model, confidence, image_array):
@@ -128,16 +129,15 @@ class Model(commands.Cog):
 
         return image, results
 
-    @staticmethod
-    def semantic_base(model, image_array):
+    def semantic_base(self, model, image_array):
         semantic_segmentation = edgeiq.SemanticSegmentation(model)
         semantic_segmentation.load(engine=edgeiq.Engine.DNN)
 
         # Build legend into image, save it to a file and crop the whitespace
         legend_html = semantic_segmentation.build_legend()
-        config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
+
         options = {"quiet": ""}
-        imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
+        imgkit.from_string(legend_html, "data/legend.png", config=self.config, options=options)
         legend_image = Image.open("data/legend.png")
         width, height = legend_image.size
         legend_image.crop((0, 0, 0.61 * width, height)).save("data/legend.png")
