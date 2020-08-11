@@ -1,4 +1,3 @@
-import json
 import random
 import re
 from subprocess import Popen, PIPE
@@ -7,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
-from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
+from cogs.model import get_model_info, get_model_aliases, get_model_by_alias, read_json
 
 
 class Commands(commands.Cog):
@@ -96,15 +95,13 @@ class Commands(commands.Cog):
     def limit(text, limit_int):
         text = str(text)
         if len(text) > limit_int:
-            return text[:limit_int-3] + "..."
+            return text[:limit_int - 3] + "..."
         return text
 
     @commands.command(aliases=["h"])
     async def help(self, ctx, command=None):
         async with ctx.typing():
-            with open("data/help.json", "r") as json_file:
-                encoded_data = json_file.read()
-                help_data = json.loads(encoded_data)
+            help_data = read_json("data/help.json")
 
             title = help_data["default"]["title"]
             colour = 0xB91C36
@@ -117,7 +114,6 @@ class Commands(commands.Cog):
                 # Grabbing title, footer, description and notes (if that exists)
                 title += help_data[command.name]["title"]
                 description = "\n".join(help_data[command.name]["description"])
-                print(command.aliases)
                 footer = "" if len(command.aliases) == 0 else "Aliases: {}".format(", ".join(command.aliases))
 
                 # Basically just a special formatted description addition
@@ -201,10 +197,9 @@ class Commands(commands.Cog):
         model_name = get_model_by_alias(model_name)
 
         if model_name is None:  # No specified model so show list of models
-            with open("alwaysai.app.json", "r") as json_file:
-                encoded_data = json_file.read()
-                decoded_data = json.loads(encoded_data)
-
+            print(model_name)
+            decoded_data = read_json("alwaysai.app.json")
+            print(decoded_data)
             # Formatting all models into a 2D list - each inner list is an unformatted page
             models_per_page = 10
             model_list = list(decoded_data["models"].keys())

@@ -9,6 +9,7 @@ import psutil
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
+from cogs.model import read_json
 
 
 class Owner(commands.Cog):
@@ -16,9 +17,7 @@ class Owner(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.colour = discord.Color.blurple()
-
-        with open("data/admins.json", "r") as json_file:
-            self.admins = json.loads(json_file.read())["ids"]
+        self.admins = read_json("data/admins.json")["ids"]
 
     async def cog_check(self, ctx):
         return await self.bot.is_owner(ctx.author) or ctx.author.id in self.admins
