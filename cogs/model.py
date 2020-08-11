@@ -41,8 +41,7 @@ def get_model_info(model_name):
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
     :return: Dict, contains the data you requested in the same order
     """
-    decoded_data = flatten(read_json("models/{}/alwaysai.model.json"))
-
+    decoded_data = flatten(read_json("models/{}/alwaysai.model.json".format(model_name)))
     for key in decoded_data:
         if decoded_data[key] == "":
             decoded_data[key] = None
@@ -139,9 +138,9 @@ class Model(commands.Cog):
         config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
         options = {"quiet": ""}
         imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
-        legend_image = Image.open("legend.png")
+        legend_image = Image.open("data/legend.png")
         width, height = legend_image.size
-        legend_image.crop((0, 0, 0.61 * width, height)).save("legend.png")
+        legend_image.crop((0, 0, 0.61 * width, height)).save("data/legend.png")
 
         # Apply the semantic segmentation mask onto the given image
         results = semantic_segmentation.segment_image(image_array)
@@ -172,7 +171,6 @@ class Model(commands.Cog):
                 return
 
             for img in attachments:  # Iterating through each image in the message - only works for mobile
-
                 # Getting image and converting it to appropriate data type
                 img_bytes = await img.read()
                 np_arr = np.fromstring(img_bytes, np.uint8)
