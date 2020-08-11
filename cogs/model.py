@@ -31,19 +31,22 @@ def flatten(d, parent_key="", sep="_"):
     return dict(items)
 
 
+def read_json(path):
+    with open(path, "r") as json_file:
+        return json.loads(json_file.read())
+
+
 def get_model_info(model_name):
     """
     :param model_name: String, name for the model you wish to get data on. E.g. 'alwaysai/res10_300x300_ssd_iter_140000'
     :return: Dict, contains the data you requested in the same order
     """
-    with open("models/{}/alwaysai.model.json".format(model_name), "r") as json_file:
-        decoded_data = flatten(json.loads(json_file.read()))
+    decoded_data = flatten(read_json("models/{}/alwaysai.model.json".format(model_name)))
+    for key in decoded_data:
+        if decoded_data[key] == "":
+            decoded_data[key] = None
 
-        for key in decoded_data:
-            if decoded_data[key] == "":
-                decoded_data[key] = None
-
-        return decoded_data
+    return decoded_data
 
 
 def get_model_by_alias(alias):
@@ -72,6 +75,7 @@ class Model(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
 
     @staticmethod
     def detection_base(model, confidence, image_array):
@@ -125,19 +129,18 @@ class Model(commands.Cog):
 
         return image, results
 
-    @staticmethod
-    def semantic_base(model, image_array):
+    def semantic_base(self, model, image_array):
         semantic_segmentation = edgeiq.SemanticSegmentation(model)
         semantic_segmentation.load(engine=edgeiq.Engine.DNN)
 
         # Build legend into image, save it to a file and crop the whitespace
         legend_html = semantic_segmentation.build_legend()
-        config = imgkit.config(wkhtmltoimage="wkhtmltopdf/bin/wkhtmltoimage.exe")
+
         options = {"quiet": ""}
-        imgkit.from_string(legend_html, "data/legend.png", config=config, options=options)
-        legend_image = Image.open("legend.png")
+        imgkit.from_string(legend_html, "data/legend.png", config=self.config, options=options)
+        legend_image = Image.open("data/legend.png")
         width, height = legend_image.size
-        legend_image.crop((0, 0, 0.61 * width, height)).save("legend.png")
+        legend_image.crop((0, 0, 0.61 * width, height)).save("data/legend.png")
 
         # Apply the semantic segmentation mask onto the given image
         results = semantic_segmentation.segment_image(image_array)
@@ -168,7 +171,6 @@ class Model(commands.Cog):
                 return
 
             for img in attachments:  # Iterating through each image in the message - only works for mobile
-
                 # Getting image and converting it to appropriate data type
                 img_bytes = await img.read()
                 np_arr = np.fromstring(img_bytes, np.uint8)
@@ -287,5 +289,4 @@ def setup(bot):
     bot.add_cog(Model(bot))
 
 
-with open("data/aliases.json", "r") as json_file:
-    model_aliases = json.loads(json_file.read())
+model_aliases = read_json("data/aliases.json")
