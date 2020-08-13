@@ -23,13 +23,14 @@ The unofficial official alwaysAI discord bot repo!
 
 ## Setup
 1. Add in the data folder a `token.secret` file put within it the bots token. It is essentially just a text file with a different extension.
-2. Run the `[wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)` installer and install it into a folder called wkhtmltopdf. The path to `wkhtmltoimage.exe` should be `repoPath/wkhtmltopdf/bin/wkhtmltoimage.exe`
-3. Run in terminal in the repo `aai app configure` and choose `You Local Computer` on the prompt
-4. Run in terminal in the repo `aai app install` to get the Python venv and appropriate models
-5. Move `requirements.txt` into `venv/scripts`
-6. Run in terminal in the repo `cd venv/scripts`
-7. Run in terminal in the repo `activate`
-8. Run in terminal in the repo `pip install -r requirements.txt`
+2. Run the [wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html) installer and install it into a folder called wkhtmltopdf. The path to `wkhtmltoimage.exe` should be `repoPath/wkhtmltopdf/bin/wkhtmltoimage.exe`
+3. Run in terminal in the repo `aai user login` and provide the right details
+4. On the [alwaysai website](https://alwaysai.co/dashboard/) create a new project from scratch.
+5. Run in terminal in the repo `aai app configure --project <Project ID>` where `<Project ID>` is the Project ID provided on your project page
+6. Run in terminal in the repo `aai app install` to get the Python venv and appropriate models
+7. Run in terminal in the repo `cd venv/scripts`
+8. Run in terminal in the repo `activate`
+9. Run in terminal in the repo `pip install -r ../../data/requirements.txt`
 
 To start running the bot run `run.bat`.
 
