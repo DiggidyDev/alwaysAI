@@ -26,7 +26,7 @@ The unofficial official alwaysAI discord bot repo!
 2. Run the `[wkhtmltoimage.exe](https://wkhtmltopdf.org/downloads.html)` installer and install it into a folder called wkhtmltopdf. The path to `wkhtmltoimage.exe` should be `repoPath/wkhtmltopdf/bin/wkhtmltoimage.exe`
 3. Run in terminal in the repo `aai user login` and provide the right details
 4. On the [alwaysai website](https://alwaysai.co/dashboard/) create a new project from scratch.
-5. Run in terminal in the repo `aai app configure --project <Project ID>` where `<Project ID>` is the Project ID provided on your project page
+5. Run in terminal in the repo `aai app configure --project <Project ID>` where `<Project ID>` is the Project ID provided on your project page and select `Your local computer`
 6. Run in terminal in the repo `aai app install` to get the Python venv and appropriate models
 7. Run in terminal in the repo `cd venv/scripts`
 8. Run in terminal in the repo `activate`
