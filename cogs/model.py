@@ -88,7 +88,7 @@ class Model(commands.Cog):
 
         predictions = []
         for (object_id, prediction) in objects.items():
-            prediction.label = "Object {}".format(object_id)
+            prediction.label = "{}: {}".format(prediction.label, object_id)
             predictions.append(prediction)
 
         image = edgeiq.markup_image(image_array, predictions)
