@@ -1,0 +1,13 @@
+{
+    "User ID": 275669333726855168,
+    "Command": "c",
+    "Args": [],
+    "Kwargs": [],
+    "Traceback": [
+        "Traceback (most recent call last):\n",
+        "  File \"D:\\Documents\\GitHub\\alwaysAI\\venv\\lib\\site-packages\\discord\\ext\\commands\\bot.py\", line 903, in invoke\n    await ctx.command.invoke(ctx)\n",
+        "  File \"D:\\Documents\\GitHub\\alwaysAI\\venv\\lib\\site-packages\\discord\\ext\\commands\\core.py\", line 847, in invoke\n    await self.prepare(ctx)\n",
+        "  File \"D:\\Documents\\GitHub\\alwaysAI\\venv\\lib\\site-packages\\discord\\ext\\commands\\core.py\", line 777, in prepare\n    raise CheckFailure('The check functions for command {0.qualified_name} failed.'.format(self))\n",
+        "discord.ext.commands.errors.CheckFailure: The check functions for command cog failed.\n"
+    ]
+}

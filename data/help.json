@@ -92,7 +92,8 @@
 			"All cogs names will start with `cogs.`.",
 			"For example `cogs.model`\n> ",
 			"Reloading all cogs may help if the bot has any issues - if it doesn't then let the bot developers know\n> ",
-			"If you don't know how this command works properly I would recommend that you only use `*cog reloadall`"
+			"If you don't know how this command works properly I would recommend that you only use `*cog reloadall`\n> ",
+			"NEVER unload `cogs.owner` since this will turn off the cog command."
 		]
 	},
 	"eval": {
