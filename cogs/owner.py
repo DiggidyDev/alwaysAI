@@ -111,6 +111,12 @@ class Owner(commands.Cog):
             await generate_user_error_embed(ctx, message)
             error_handled = True
 
+        if isinstance(error, discord.ext.commands.errors.CheckFailure):
+            message = "```NoPermissions - You don't have the correct permissions to do this```\n\n" \
+                      "If you believe you should then let the bot developer know."
+            await generate_user_error_embed(ctx, message)
+            error_handled = True
+
         if not error_handled:
             await send_traceback(ctx, error)
 
