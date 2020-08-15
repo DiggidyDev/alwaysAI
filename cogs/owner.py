@@ -9,7 +9,7 @@ import psutil
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
-from cogs.model import read_json
+from cogs.model import read_json, get_model_by_alias, get_model_aliases
 
 
 class Owner(commands.Cog):
@@ -36,6 +36,51 @@ class Owner(commands.Cog):
 
         if not error_handled:
             await send_traceback(ctx, error)
+
+    @commands.group()
+    async def alias(self, ctx):
+        print("[ALIAS CMD] Maybe some history of aliases/people who modified them?")
+
+    @alias.command()
+    async def add(self, ctx, alias, model):
+        model = get_model_by_alias(model)
+        if not model:
+            await generate_user_error_embed(ctx, "No model was found with that name or alias.\n"
+                                                 "Use `*mhelp` to see all available models.")
+
+        aliases = get_model_aliases(model)
+
+        if alias not in aliases[model]:
+            aliases[model].append(alias)
+
+            with open("data/aliases.json", "w+") as f:
+                json.dump(aliases, f, sort_keys=True, indent=4)
+
+            await ctx.send("Alias successfully added!")  # Cleaner embed for this?
+        else:
+            await generate_user_error_embed(ctx, "That alias already exists.\n"
+                                                 f"Use `*mhelp {model}` to see all available aliases.")
+
+    @alias.command()
+    async def remove(self, ctx, alias, model):
+        model = get_model_by_alias(model)
+        if not model:
+            await generate_user_error_embed(ctx, "No model was found with that name or alias.\n"
+                                                 "Use `*mhelp` to see all available models.")
+
+        aliases = get_model_aliases(model)
+
+        if alias in aliases[model]:
+            aliases[model].remove(alias)
+
+            with open("data/aliases.json", "w+") as f:
+                json.dump(aliases, f, sort_keys=True, indent=4)
+
+            await ctx.send("Alias successfully removed!")  # And for this too!
+        else:
+            await generate_user_error_embed(ctx, "That alias doesn't exist.\n"
+                                                 f"Use `*mhelp {model}` to see all available aliases.")
+
 
     @commands.command(aliases=["e"], hidden=True)
     async def eval(self, ctx, *, code):
@@ -171,3 +216,5 @@ class Owner(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Owner(bot))
+
+model_aliases = read_json("data/aliases.json")
