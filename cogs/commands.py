@@ -277,6 +277,11 @@ class Commands(commands.Cog):
                 embed_dataset = self.limit(data["dataset"], 50)
                 embed_version = self.limit(data["version"], 10)
 
+                if aliases is None:
+                    embed_aliases = None
+                else:
+                    embed_aliases = ", ".join(aliases[:-1])
+
                 description = "**Description:** {}\n" \
                               "**Category:** {}\n" \
                               "**License:** {}\n\n" \
@@ -291,7 +296,7 @@ class Commands(commands.Cog):
                                                        embed_framework,
                                                        embed_dataset,
                                                        embed_version,
-                                                       ", ".join(aliases[:-1]))
+                                                       embed_aliases)
 
                 embed = discord.Embed(title=data["id"],
                                       url=data["website_url"],
