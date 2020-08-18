@@ -95,6 +95,8 @@ class Commands(commands.Cog):
     def limit(text, limit_int):
         text = str(text)
         if len(text) > limit_int:
+            if re.match(r"^-?\d+(?:\.\d+)?$", text) is not None:
+                return round(float(text), limit_int)
             return text[:limit_int - 3] + "..."
         return text
 
@@ -270,7 +272,9 @@ class Commands(commands.Cog):
                 category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
                 category = " ".join(category_split)
 
-                embed_description = self.limit(data["description"], 1000)
+                # Limiting values in case a model somehow manages to reach the embed character limit
+                embed_title = self.limit(data["id"], 100)
+                embed_description = self.limit(data["description"], 1500)
                 embed_license = self.limit(data["license"], 50)
                 embed_inf_time = self.limit(data["inference_time"], 20)
                 embed_framework = self.limit(data["model_parameters_framework_type"], 50)
@@ -298,7 +302,7 @@ class Commands(commands.Cog):
                                                        embed_version,
                                                        embed_aliases)
 
-                embed = discord.Embed(title=data["id"],
+                embed = discord.Embed(title=embed_title,
                                       description=description,
                                       colour=0x8b0048)
 
