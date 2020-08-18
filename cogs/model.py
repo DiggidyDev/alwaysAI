@@ -55,7 +55,7 @@ def get_model_by_alias(alias):
     :return: String model name or None if one isn't found
     """
     models = read_json("alwaysai.app.json")["models"]
-    if alias in model_aliases.keys() or alias in models.keys():
+    if alias in models.keys():
         return alias
     return next((model for model, aliases in model_aliases.items() if alias in aliases), None)
 
