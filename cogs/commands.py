@@ -95,6 +95,8 @@ class Commands(commands.Cog):
     def limit(text, limit_int):
         text = str(text)
         if len(text) > limit_int:
+            if re.match(r"^-?\d+(?:\.\d+)?$", text) is not None:
+                return round(float(text), limit_int)
             return text[:limit_int - 3] + "..."
         return text
 
@@ -183,7 +185,7 @@ class Commands(commands.Cog):
         error_handled = False
 
         if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            message = "```MissingQuery - please include a query```\n\n" \
+            message = "```Missing Query - please include a query```\n\n" \
                       "For example: `*find Detection`\n" \
                       "This try to find anything in the docs with `Detection` in it's name."
             await generate_user_error_embed(ctx, message)
@@ -209,9 +211,10 @@ class Commands(commands.Cog):
             current_page_num = 0
 
             if len(pages) == 0:
-                message = "```MissingModels - no models have been installed for this bot.```\n\n" \
-                          "Unless you own the bot there's not much you can do.\n" \
-                          "Try to contact the owner of the bot if you ever see this bug."
+                message = "```No Installed Models - no models have been installed for this bot.```\n\n" \
+                          "Unless you own the bot there's not much you can do.\n\n" \
+                          "Please contact the bot developers if you're seeing this\n." \
+                          "Run `*info` to find our contact information"
                 await generate_user_error_embed(ctx, message)
                 return
 
@@ -270,9 +273,11 @@ class Commands(commands.Cog):
                 category_split = re.findall("[A-Z][^A-Z]*", data["model_parameters_purpose"])
                 category = " ".join(category_split)
 
-                embed_description = self.limit(data["description"], 1000)
+                # Limiting values in case a model somehow manages to reach the embed character limit
+                embed_title = self.limit(data["id"], 100)
+                embed_description = self.limit(data["description"], 1500)
                 embed_license = self.limit(data["license"], 50)
-                embed_inf_time = self.limit(data["inference_time"], 20)
+                embed_inf_time = self.limit(data["inference_time"], 6)
                 embed_framework = self.limit(data["model_parameters_framework_type"], 50)
                 embed_dataset = self.limit(data["dataset"], 50)
                 embed_version = self.limit(data["version"], 10)
@@ -298,7 +303,7 @@ class Commands(commands.Cog):
                                                        embed_version,
                                                        embed_aliases)
 
-                embed = discord.Embed(title=data["id"],
+                embed = discord.Embed(title=embed_title,
                                       description=description,
                                       colour=0x8b0048)
 
@@ -327,7 +332,7 @@ class Commands(commands.Cog):
         error = getattr(error, "original", error)
 
         if isinstance(error, FileNotFoundError):
-            message = "```InvalidModelName - please specify a valid model name```\n\n" \
+            message = "```Invalid Model Name - please specify a valid model name```\n\n" \
                       "For example: `*mhelp alwaysai/enet`\n" \
                       "You can find all available models by running `*mhelp`"
             await generate_user_error_embed(ctx, message)

@@ -28,8 +28,9 @@ class Owner(commands.Cog):
             return
 
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            message = "```NoPermissions - You don't have the correct permissions to do this```\n\n" \
-                      "If you believe you should then let the bot developer know."
+            message = "```Incorrect Permissions - You don't have the correct permissions to do this```\n\n" \
+                      "If you believe you should then let the bot developer know.\n" \
+                      "Run `*info` to find our contact information"
             await generate_user_error_embed(ctx, message)
             error_handled = True
 
@@ -69,16 +70,16 @@ class Owner(commands.Cog):
             variant = variant.title().strip()
             desc = ""
             if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
-                message = "```InvalidVariation - please include a valid cog variation```\n\n" \
+                message = "```Invalid Variation - please include a valid cog variation```\n\n" \
                           "For example: `*cog reload cogs.model`\n" \
                           "Variations are: load, unload, reload and reloadall"
                 await generate_user_error_embed(ctx, message)
                 return
 
             if len(cog_list) == 0 and variant != "Reloadall":
-                message = "```MissingCogs - please include a the cogs you want to modify```\n\n" \
+                message = "```Missing Cogs - please include a the cogs you want to modify```\n\n" \
                           "For example: `*cog reload cogs.model`\n" \
-                          "All cogs names will start with `cogs.`. For example cogs.model"
+                          "All cogs names will start with `cogs.`. For example `cogs.model`"
                 await generate_user_error_embed(ctx, message)
                 return
 
@@ -111,8 +112,9 @@ class Owner(commands.Cog):
             error_handled = True
 
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            message = "```NoPermissions - You don't have the correct permissions to do this```\n\n" \
-                      "If you believe you should then let the bot developer know."
+            message = "```Invalid Permissions - You don't have the correct permissions to do this```\n\n" \
+                      "If you believe you should then let the bot developer know.\n" \
+                      "Run `*info` to find our contact information"
             await generate_user_error_embed(ctx, message)
             error_handled = True
 
