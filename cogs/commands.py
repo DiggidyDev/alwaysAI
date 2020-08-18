@@ -3,6 +3,7 @@ import re
 from subprocess import Popen, PIPE
 
 import discord
+from discord import Embed
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
@@ -299,12 +300,24 @@ class Commands(commands.Cog):
                                                        embed_aliases)
 
                 embed = discord.Embed(title=data["id"],
-                                      url=data["website_url"],
                                       description=description,
                                       colour=0x8b0048)
+
                 thumbnail = discord.File("data/{}.png".format(data["model_parameters_purpose"]),
                                          filename="thumbnail.png")
                 embed.set_thumbnail(url="attachment://thumbnail.png")
+
+                regex = re.compile(
+                    r"^(?:http|ftp)s?://"  # http:// or https://
+                    r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"  # domain...
+                    r"localhost|"  # localhost...
+                    r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+                    r"(?::\d+)?"  # optional port
+                    r"(?:/?|[/?]\S+)$", re.IGNORECASE)
+
+                if re.match(regex, data["website_url"]) is not None:
+                    embed.url = data["website_url"]
+                    
                 await ctx.send(embed=embed, file=thumbnail)
 
     @model_help.error
