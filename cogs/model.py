@@ -164,7 +164,7 @@ class Model(commands.Cog):
             category = get_model_info(model)["model_parameters_purpose"]
 
             if len(attachments) == 0:
-                message = "```NoAttachment - please upload an image when running the model command```\n\n" \
+                message = "```Missing Attachment - please upload an image when running the model command```\n\n" \
                           "In order to upload an image with a message you can:\n" \
                           "1. Paste an image from your clipboard\n" \
                           "2. Click the + button to the left of where you type your message"
@@ -198,7 +198,14 @@ class Model(commands.Cog):
                 elif category in ["PoseEstimation", "SemanticSegmentation"]:
                     image, results = categories[category](model, img_np)
                 else:
-                    return  # Make fancy message?
+                    message = "```Invalid Model Category - don't worry, this error isn't a fault on your end```\n\n" \
+                              "If you are seeing this then either one of two things has happened:\n" \
+                              "1. AAI has added a new model category that the bot doesn't support\n" \
+                              "2. Somehow the model infrastructure has completely changed\n\n" \
+                              "Either way, please let the bot developers know." \
+                              "This bug definitely needs squashing!\n" \
+                              "Run `*info` to find our contact information"
+                    await generate_user_error_embed(ctx, message)
 
                 embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
@@ -249,7 +256,7 @@ class Model(commands.Cog):
 
         # Singular errors
         if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            message = "```MissingModelName - please specify a model name```\n\n" \
+            message = "```Missing Model Name - please specify a model name when running this command```\n\n" \
                       "For example: `*model alwaysai/enet`\n" \
                       "This will run the `alwaysai/enet` model on the image you sent with the message"
             await generate_user_error_embed(ctx, message)
@@ -259,7 +266,7 @@ class Model(commands.Cog):
         error = getattr(error, "original", error)
 
         if isinstance(error, FileNotFoundError):
-            message = "```InvalidModelName - please specify a valid model name```\n\n" \
+            message = "```Invalid Model Name - please specify a valid model name```\n\n" \
                       "For example: `*model alwaysai/enet`\n" \
                       "You can find all available models by running `*mhelp`"
             await generate_user_error_embed(ctx, message)
@@ -267,18 +274,20 @@ class Model(commands.Cog):
 
         if isinstance(error, discord.errors.Forbidden):
             message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
-                      "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                      "Can generally be ignored. If something else caused this then please contact " \
-                      "the bot developers."
+                      "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                      "Can generally be ignored but if something else caused this then please contact the" \
+                      "bot developers.\n" \
+                      "Run `*info` to find our contact information"
             await generate_user_error_embed(ctx, message)
             error_handled = True
 
         if isinstance(error, discord.errors.HTTPException):
             if error.status == 404:
                 message = "```Error 404 Not Found - Unknown Message```\n\n" \
-                          "Usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                          "Can generally be ignored. If something else caused this then please contact " \
-                          "the bot developers."
+                          "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                          "Can generally be ignored but if something else caused this then please contact the" \
+                          "bot developers.\n" \
+                          "Run `*info` to find our contact information"
                 await generate_user_error_embed(ctx, message)
                 error_handled = True
 
