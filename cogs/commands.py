@@ -3,7 +3,6 @@ import re
 from subprocess import Popen, PIPE
 
 import discord
-from discord import Embed
 from discord.ext import commands
 
 from bot import generate_user_error_embed, send_traceback
