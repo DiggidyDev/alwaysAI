@@ -34,6 +34,9 @@ async def send_traceback(ctx, exception):
     path = path_pattern % b
 
     # Saving log to JSON file - easier to manage later on if needed
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+
     with open(path, "w") as logfile:
         command = ctx.invoked_with
         args = [str(arg) for arg in ctx.args]

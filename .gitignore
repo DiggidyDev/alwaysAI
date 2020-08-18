@@ -5,6 +5,7 @@ wkhtmltox-0.12.6-1.msvc2015-win64.exe
 /models
 /wkhtmltopdf
 /data/legend.png
+/logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
