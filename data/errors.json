@@ -1,0 +1,86 @@
+{
+	"general": {
+		"error403": [
+			"```Error 403 Forbidden - cannot retrieve asset```\n",
+			"This usually occurs if you delete your message while the bot is still running a model.\n",
+			"Can generally be ignored but if something else caused this then please contact the bot developers.",
+			"Run `*info` to find our contact information"
+		],
+		"error404": [
+			"```Error 404 Not Found - Unknown Message```\n",
+			"This usually occurs if you delete your message while the bot is still running a model.\n",
+			"Can generally be ignored but if something else caused this then please contact the bot developers.",
+			"Run `*info` to find our contact information"
+		],
+		"invalidPerms": [
+			"```Incorrect Permissions - You don't have the correct permissions to do this```\n",
+            "If you believe you should then let the bot developer know.",
+            "Run `*info` to find our contact information"
+		]
+	},
+	"model": {
+		"fileNotFound": [
+			"```Invalid Model Name - please specify a valid model name```\n",
+            "For example: `*model alwaysai/enet`",
+            "You can find all available models by running `*mhelp`"
+		],
+		"missingModelName": [
+			"```Missing Model Name - please specify a model name when running this command```\n",
+            "For example: `*model alwaysai/enet`",
+            "This will run the `alwaysai/enet` model on the image you sent with the message"
+		],
+		"invalidModelCategory": [
+			"```Invalid Model Category - don't worry, this error isn't a fault on your end```\n",
+            "If you are seeing this then either one of two things has happened:",
+            "1. AAI has added a new model category that the bot doesn't support",
+            "2. Somehow the model infrastructure has completely changed\n",
+            "Either way, please let the bot developers know.",
+            "This bug definitely needs squashing!",
+            "Run `*info` to find our contact information"
+		],
+		"missingAttachment": [
+			"```Missing Attachment - please upload an image when running the model command```\n",
+            "In order to upload an image with a message you can:",
+            "1. Paste an image from your clipboard",
+            "2. Click the + button to the left of where you type your message"
+		]
+	},
+	"cog": {
+		"invalidVariation": [
+			"```Invalid Variation - please include a valid cog variation```\n",
+            "For example: `*cog reload cogs.model`",
+            "Variations are: load, unload, reload and reloadall"
+		],
+		"missingVariation":[
+			"```MissingVariation - please include a cog variation```\n",
+            "For example: `*cog reload cogs.model`",
+            "Variations are: load, unload, reload and reloadall"
+		],
+		"missingCogs": [
+			"```Missing Cogs - please include a the cogs you want to modify```\n",
+            "For example: `*cog reload cogs.model`",
+            "All cogs names will start with `cogs.`. For example `cogs.model`"
+		]
+	},
+	"find": {
+		"missingQuery": [
+			"```Missing Query - please include a query```\n",
+            "For example: `*find Detection`",
+            "This try to find anything in the docs with `Detection` in it's name."
+		]
+	},
+	"modelHelp": {	
+		"noInstalledModels": [
+			"```No Installed Models - no models have been installed for this bot.```\n",
+            "Unless you own the bot there's not much you can do.\n",
+            "Please contact the bot developers if you're seeing this.",
+            "Run `*info` to find our contact information"
+		],
+		"invalidModelName": [
+			"```Invalid Model Name - please specify a valid model name```\n",
+            "For example: `*mhelp alwaysai/enet`",
+            "You can find all available models by running `*mhelp`"
+		]
+	}
+	
+}

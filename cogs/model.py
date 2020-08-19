@@ -1,17 +1,16 @@
 import collections
-import json
 from copy import deepcopy
 from io import BytesIO
 
 import cv2
 import discord
 import edgeiq
+import imgkit
 import numpy as np
 from PIL import Image
 from discord.ext import commands
-import imgkit
 
-from bot import generate_user_error_embed, send_traceback
+from bot import send_traceback, read_json, generate_user_error_embed, get_error_message
 
 
 def flatten(d, parent_key="", sep="_"):
@@ -29,11 +28,6 @@ def flatten(d, parent_key="", sep="_"):
         else:
             items.append((new_key, v))
     return dict(items)
-
-
-def read_json(path):
-    with open(path, "r") as json_file:
-        return json.loads(json_file.read())
 
 
 def get_model_info(model_name):
@@ -164,11 +158,7 @@ class Model(commands.Cog):
             category = get_model_info(model)["model_parameters_purpose"]
 
             if len(attachments) == 0:
-                message = "```Missing Attachment - please upload an image when running the model command```\n\n" \
-                          "In order to upload an image with a message you can:\n" \
-                          "1. Paste an image from your clipboard\n" \
-                          "2. Click the + button to the left of where you type your message"
-                await generate_user_error_embed(ctx, message)
+                await generate_user_error_embed(ctx, await get_error_message("model", "missingAttachment"))
                 return
 
             for img in attachments:  # Iterating through each image in the message - only works for mobile
@@ -198,14 +188,7 @@ class Model(commands.Cog):
                 elif category in ["PoseEstimation", "SemanticSegmentation"]:
                     image, results = categories[category](model, img_np)
                 else:
-                    message = "```Invalid Model Category - don't worry, this error isn't a fault on your end```\n\n" \
-                              "If you are seeing this then either one of two things has happened:\n" \
-                              "1. AAI has added a new model category that the bot doesn't support\n" \
-                              "2. Somehow the model infrastructure has completely changed\n\n" \
-                              "Either way, please let the bot developers know." \
-                              "This bug definitely needs squashing!\n" \
-                              "Run `*info` to find our contact information"
-                    await generate_user_error_embed(ctx, message)
+                    await generate_user_error_embed(ctx, await get_error_message("model", "invalidModelCategory"))
 
                 embed_output = "**User ID:** {}\n\n**Model:** {}".format(ctx.author.id, model) + embed_output
 
@@ -248,7 +231,8 @@ class Model(commands.Cog):
                             else:
                                 raise e
 
-        await ctx.message.delete()
+        if ctx.message.guild is not None:
+            await ctx.message.delete()
 
     @model.error
     async def model_error(self, ctx, error):
@@ -256,40 +240,23 @@ class Model(commands.Cog):
 
         # Singular errors
         if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            message = "```Missing Model Name - please specify a model name when running this command```\n\n" \
-                      "For example: `*model alwaysai/enet`\n" \
-                      "This will run the `alwaysai/enet` model on the image you sent with the message"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("model", "missingModelName"))
             error_handled = True
 
         # Wrapped errors e.g: discord.ext.commands.errors.CommandInvokeError: ... FileNotFoundError: ...
         error = getattr(error, "original", error)
 
         if isinstance(error, FileNotFoundError):
-            message = "```Invalid Model Name - please specify a valid model name```\n\n" \
-                      "For example: `*model alwaysai/enet`\n" \
-                      "You can find all available models by running `*mhelp`"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("model", "invalidModelName"))
             error_handled = True
 
         if isinstance(error, discord.errors.Forbidden):
-            if ctx.message.guild is not None:
-                message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
-                          "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                          "Can generally be ignored but if something else caused this then please contact the" \
-                          "bot developers.\n" \
-                          "Run `*info` to find our contact information"
-                await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("general", "error403"))
             error_handled = True
 
         if isinstance(error, discord.errors.HTTPException):
             if error.status == 404:
-                message = "```Error 404 Not Found - Unknown Message```\n\n" \
-                          "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                          "Can generally be ignored but if something else caused this then please contact the" \
-                          "bot developers.\n" \
-                          "Run `*info` to find our contact information"
-                await generate_user_error_embed(ctx, message)
+                await generate_user_error_embed(ctx, await get_error_message("general", "error404"))
                 error_handled = True
 
         if not error_handled:

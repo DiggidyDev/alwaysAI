@@ -7,7 +7,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from bot import generate_user_error_embed, send_traceback
+from bot import send_traceback, generate_user_error_embed, get_error_message
 from cogs.model import read_json
 
 
@@ -28,10 +28,7 @@ class Owner(commands.Cog):
             return
 
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            message = "```Incorrect Permissions - You don't have the correct permissions to do this```\n\n" \
-                      "If you believe you should then let the bot developer know.\n" \
-                      "Run `*info` to find our contact information"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("general", "invalidPerms"))
             error_handled = True
 
         if not error_handled:
@@ -70,17 +67,11 @@ class Owner(commands.Cog):
             variant = variant.title().strip()
             desc = ""
             if variant not in ["Reloadall", "Reload", "Load", "Unload"]:
-                message = "```Invalid Variation - please include a valid cog variation```\n\n" \
-                          "For example: `*cog reload cogs.model`\n" \
-                          "Variations are: load, unload, reload and reloadall"
-                await generate_user_error_embed(ctx, message)
+                await generate_user_error_embed(ctx, await get_error_message("cog", "invalidVariation"))
                 return
 
             if len(cog_list) == 0 and variant != "Reloadall":
-                message = "```Missing Cogs - please include a the cogs you want to modify```\n\n" \
-                          "For example: `*cog reload cogs.model`\n" \
-                          "All cogs names will start with `cogs.`. For example `cogs.model`"
-                await generate_user_error_embed(ctx, message)
+                await generate_user_error_embed(ctx, await get_error_message("cog", "missingCogs"))
                 return
 
             if variant == "Reloadall":
@@ -95,6 +86,7 @@ class Owner(commands.Cog):
                     desc += "<:tick:671116183751360523> | {}\n".format(cog)
                 except Exception as e:
                     desc += "<:cross:671116183780720670> | {} ~ `{} - {}`\n".format(cog, type(e).__name__, e)
+                    await send_traceback(ctx, e)
 
             embed = discord.Embed(title=variant, description=desc, colour=self.colour)
         await ctx.send(embed=embed)
@@ -105,17 +97,11 @@ class Owner(commands.Cog):
 
         # Singular errors
         if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            message = "```MissingVariation - please include a cog variation```\n\n" \
-                      "For example: `*cog reload cogs.model`\n" \
-                      "Variations are: load, unload, reload and reloadall"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("cog", "missingVariation"))
             error_handled = True
 
         if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            message = "```Invalid Permissions - You don't have the correct permissions to do this```\n\n" \
-                      "If you believe you should then let the bot developer know.\n" \
-                      "Run `*info` to find our contact information"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("general", "invalidPerms"))
             error_handled = True
 
         if not error_handled:
