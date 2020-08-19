@@ -273,12 +273,13 @@ class Model(commands.Cog):
             error_handled = True
 
         if isinstance(error, discord.errors.Forbidden):
-            message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
-                      "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
-                      "Can generally be ignored but if something else caused this then please contact the" \
-                      "bot developers.\n" \
-                      "Run `*info` to find our contact information"
-            await generate_user_error_embed(ctx, message)
+            if ctx.message.guild is not None:
+                message = "```Error 403 Forbidden - cannot retrieve asset```\n\n" \
+                          "This usually occurs if you delete your message while the bot is still running a model.\n\n" \
+                          "Can generally be ignored but if something else caused this then please contact the" \
+                          "bot developers.\n" \
+                          "Run `*info` to find our contact information"
+                await generate_user_error_embed(ctx, message)
             error_handled = True
 
         if isinstance(error, discord.errors.HTTPException):
