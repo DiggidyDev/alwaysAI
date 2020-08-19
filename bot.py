@@ -7,9 +7,19 @@ import discord
 from discord.ext import commands
 
 
+async def get_error_message(main_key, sub_key):
+    message = read_json("data/errors.json")[main_key][sub_key]
+    return "\n".join(message)
+
+
 async def generate_user_error_embed(ctx, message):
     embed = discord.Embed(title="**Error**", description=message, colour=0xA50B06)
     await ctx.send(embed=embed)
+
+
+def read_json(path):
+    with open(path, "r") as json_file:
+        return json.loads(json_file.read())
 
 
 async def send_traceback(ctx, exception):

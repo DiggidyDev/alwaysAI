@@ -5,13 +5,11 @@ from subprocess import Popen, PIPE
 import discord
 from discord.ext import commands
 
-from bot import generate_user_error_embed, send_traceback
-from cogs.model import get_model_info, get_model_aliases, get_model_by_alias, read_json
+from bot import send_traceback, read_json, get_error_message, generate_user_error_embed
+from cogs.model import get_model_info, get_model_aliases, get_model_by_alias
 
 
 class Commands(commands.Cog):
-    # TODO Install more models
-
     def __init__(self, bot):
         self.bot = bot
         self.bot.docs = None
@@ -150,6 +148,8 @@ class Commands(commands.Cog):
 
     @commands.command(aliases=["f", "search"])
     async def find(self, ctx, *queries):
+        if len(queries) == 0:
+            await generate_user_error_embed(ctx, await get_error_message("find", "missingQuery"))
         for query in queries:
             async with ctx.typing():
                 # Made asynchronous due to subprocess' Popen being a blocking call
@@ -180,20 +180,6 @@ class Commands(commands.Cog):
 
             await ctx.send(embed=embed)
 
-    @find.error
-    async def find_error(self, ctx, error):
-        error_handled = False
-
-        if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            message = "```Missing Query - please include a query```\n\n" \
-                      "For example: `*find Detection`\n" \
-                      "This try to find anything in the docs with `Detection` in it's name."
-            await generate_user_error_embed(ctx, message)
-            error_handled = True
-
-        if not error_handled:
-            await send_traceback(ctx, error)
-
     @commands.command(aliases=["modelhelp", "mhelp", "mh"])
     async def model_help(self, ctx, model_name=None):
         model_name = get_model_by_alias(model_name)
@@ -211,11 +197,7 @@ class Commands(commands.Cog):
             current_page_num = 0
 
             if len(pages) == 0:
-                message = "```No Installed Models - no models have been installed for this bot.```\n\n" \
-                          "Unless you own the bot there's not much you can do.\n\n" \
-                          "Please contact the bot developers if you're seeing this\n." \
-                          "Run `*info` to find our contact information"
-                await generate_user_error_embed(ctx, message)
+                await generate_user_error_embed(ctx, await get_error_message("modelHelp", "noInstalledModels"))
                 return
 
             title = "**Model List**"
@@ -236,7 +218,9 @@ class Commands(commands.Cog):
             # Wait for a users reaction
             while True:
                 reaction, user = await self.bot.wait_for("reaction_add", check=check)
-                await embed_message.remove_reaction(str(reaction.emoji), user)
+
+                if ctx.message.guild is not None:
+                    await embed_message.remove_reaction(str(reaction.emoji), user)
 
                 emoji = str(reaction)
 
@@ -333,10 +317,7 @@ class Commands(commands.Cog):
         error = getattr(error, "original", error)
 
         if isinstance(error, FileNotFoundError):
-            message = "```Invalid Model Name - please specify a valid model name```\n\n" \
-                      "For example: `*mhelp alwaysai/enet`\n" \
-                      "You can find all available models by running `*mhelp`"
-            await generate_user_error_embed(ctx, message)
+            await generate_user_error_embed(ctx, await get_error_message("modelHelp", "invalidModelName"))
             error_handled = True
 
         if not error_handled:
