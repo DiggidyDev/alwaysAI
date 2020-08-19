@@ -15,6 +15,8 @@ The unofficial official alwaysAI discord bot repo!
 
 **help.json** - data used by the help embed
 
+**errors.json** - data used by any errors outputted
+
 ### Can modify
 **aliases.json** - model aliases. Feel free to add to this file any new models or new custom aliases.
 
