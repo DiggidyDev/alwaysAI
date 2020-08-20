@@ -307,7 +307,6 @@ class Commands(commands.Cog):
                     r"(?::\d+)?"  # optional port
                     r"(?:/?|[/?]\S+)$", re.IGNORECASE)
 
-                print(data["website_url"] is None)
                 if data["website_url"] is None or re.match(regex, data["website_url"]) is not None:
                     embed.url = data["website_url"]
 
