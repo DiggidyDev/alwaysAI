@@ -261,7 +261,7 @@ class Commands(commands.Cog):
                 data_keys = list(data.keys())
                 desc_array = []
                 embed_array = [["description", "**Description:**", 1500],
-                               [None, category, None],
+                               [category, "**Category:**", None],
                                ["license", "**License:**", 50],
                                [None, "\n", None],
                                ["inference_time", "**Inference Time:**", 6],
@@ -270,8 +270,10 @@ class Commands(commands.Cog):
                                ["version", "**Version:**", 10]]
 
                 for Key, StringVal, CharLimit in embed_array:  # Preventing key errors
-                    if CharLimit is None or Key is None:
+                    if Key is None:
                         desc_array.append(StringVal)
+                    elif CharLimit is None:
+                        desc_array.append("{} {}".format(StringVal, Key))
                     else:
                         if Key in data_keys:
                             desc_array.append("{} {}".format(StringVal, self.limit(data[Key], CharLimit)))
