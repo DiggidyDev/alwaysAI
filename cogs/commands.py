@@ -258,36 +258,38 @@ class Commands(commands.Cog):
                 category = " ".join(category_split)
 
                 # Limiting values in case a model somehow manages to reach the embed character limit
-                embed_title = self.limit(data["id"], 100)
-                embed_description = self.limit(data["description"], 1500)
-                embed_license = self.limit(data["license"], 50)
-                embed_inf_time = self.limit(data["inference_time"], 6)
-                embed_framework = self.limit(data["model_parameters_framework_type"], 50)
-                embed_dataset = self.limit(data["dataset"], 50)
-                embed_version = self.limit(data["version"], 10)
+                data_keys = list(data.keys())
+                desc_array = []
+                embed_array = [["description", "**Description:**", 1500],
+                               [None, category, None],
+                               ["license", "**License:**", 50],
+                               [None, "\n", None],
+                               ["inference_time", "**Inference Time:**", 6],
+                               ["model_parameters_framework_type", "**Framework:**", 50],
+                               ["dataset", "**Dataset:**", 50],
+                               ["version", "**Version:**", 10]]
+
+                for Key, StringVal, CharLimit in embed_array:  # Preventing key errors
+                    if CharLimit is None or Key is None:
+                        desc_array.append(StringVal)
+                    else:
+                        if Key in data_keys:
+                            desc_array.append("{} {}".format(StringVal, self.limit(data[Key], CharLimit)))
+
+                description = "\n".join(desc_array)
+
+                if "id" in data_keys:
+                    title = self.limit(data["id"], 100)
+                else:
+                    title = "Unknown Model"
 
                 if aliases is None:
-                    embed_aliases = None
+                    description += "\n\n**Aliases:** None"
                 else:
                     embed_aliases = ", ".join(aliases[:-1])
+                    description += "\n\n**Aliases:** {}".format(embed_aliases)
 
-                description = "**Description:** {}\n" \
-                              "**Category:** {}\n" \
-                              "**License:** {}\n\n" \
-                              "**Inference Time:** {}\n" \
-                              "**Framework:** {}\n" \
-                              "**Dataset:** {}\n" \
-                              "**Version:** {}\n\n" \
-                              "**Aliases:** {}".format(embed_description,
-                                                       category,
-                                                       embed_license,
-                                                       embed_inf_time,
-                                                       embed_framework,
-                                                       embed_dataset,
-                                                       embed_version,
-                                                       embed_aliases)
-
-                embed = discord.Embed(title=embed_title,
+                embed = discord.Embed(title=title,
                                       description=description,
                                       colour=0x8b0048)
 
@@ -306,7 +308,7 @@ class Commands(commands.Cog):
                 print(data["website_url"] is None)
                 if data["website_url"] is None or re.match(regex, data["website_url"]) is not None:
                     embed.url = data["website_url"]
-                    
+
                 await ctx.send(embed=embed, file=thumbnail)
 
     @model_help.error
