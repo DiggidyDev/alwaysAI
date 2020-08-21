@@ -10,6 +10,7 @@
 			"`*find <term> <term> <etc...>`",
 			"`*info`\n",
 			"**Admin Commands:**",
+			"`*alias <add/remove> <alias> <model>`",
 			"`*cog <variation> <cog name: optional>`",
 			"`*eval <Python code>`",
 			"`*sys`"
@@ -74,8 +75,20 @@
 	"info": {
 		"title" : "~ Info Command",
 		"description": [
-			"*Shows a small amount of information about the bot*",
+			"*Shows a small amount of information about the bot.*",
 			"Usage: `*info`"
+		]
+	},
+	"alias": {
+		"title": "~ Alias Modification Command",
+		"description": [
+			"*Add and remove model's aliases.*\n",
+			"Usage: `*alias <add/remove> <alias> <model>`\n",
+			"`<add/remove>` ~ either add or remove an alias from a model.\n",
+			"`<alias>` ~ the name of the alias you wish to add to a model.\n",
+			"`<model>` ~ the model you wish to add or remove an alias to/from.\n",
+			"If you attempt to add an alias that exists, an error will occur.",
+			"A similar error will occur for attempting to remove an alias that doesn't exist."
 		]
 	},
 	"cog": {
@@ -83,8 +96,8 @@
 		"description": [
 			"*Lets you manipulate the bots cogs.*\n",
 			"`*cog <variation> <*cog names: optional>`\n",
-			"`<variation>` ~ the type of manipulation: unload, load, reload or reloadall.\n",
-			"`<*cog names: optional>` ~ all cogs you want to be affected (not needed for reloadall).\n",
+			"`<variation>` ~ the type of manipulation: `unload`, `load`, `reload` or `reloadall`.\n",
+			"`<*cog names: optional>` ~ all cogs you want to be affected (not needed for `reloadall`).\n",
 			"Example: `*cog load cogs.model cogs.commands`"
 		],
 		"formatted": [
