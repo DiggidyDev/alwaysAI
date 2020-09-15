@@ -146,7 +146,7 @@ class Model(commands.Cog):
 
     # TODO Fix Alpha Channel issue
     @commands.command(aliases=["m"])
-    async def model(self, ctx, model, confidence):
+    async def model(self, ctx, model, confidence=""):
         async with ctx.typing():
             await ctx.message.add_reaction("\U0001f50e")
             attachments = ctx.message.attachments
