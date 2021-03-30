@@ -38,7 +38,7 @@ Pillow==7.2.0
 pluggy==0.13.1
 psutil==5.7.0
 py==1.8.1
-Pygments==2.6.1
+Pygments==2.7.4
 pyparsing==2.4.7
 pyrealsense2==2.34.0.1470
 pytest==4.4.1
